@@ -81,6 +81,35 @@ describe('VideoGenerationWorkspace', () => {
     expect(screen.getByTitle('Generate video')).toBeDisabled();
   });
 
+  it('同步外部设置导入后写入的完整视频模型', async () => {
+    const registry = loadRegistry();
+    registry.videoModels = [];
+    registry.defaults.videoGeneration = '';
+    saveRegistry(registry);
+
+    render(
+      <LanguageProvider initialLocale="en">
+        <VideoGenerationWorkspace onConfigureApiKey={vi.fn()} showToast={vi.fn()} />
+      </LanguageProvider>,
+    );
+
+    expect(screen.getByText('Not configured')).toBeInTheDocument();
+    registry.videoModels = [{
+      id: 'imported-video',
+      protocol: 'new-api',
+      name: 'Imported Seedance',
+      modelId: 'doubao-seedance-2-5-260628',
+      apiKey: 'imported-key',
+      baseUrl: 'http://127.0.0.1:3000',
+    }];
+    registry.defaults.videoGeneration = 'imported-video';
+    saveRegistry(registry);
+    act(() => window.dispatchEvent(new Event('flyreq-model-registry-updated')));
+
+    await waitFor(() => expect(screen.queryByText('Not configured')).not.toBeInTheDocument());
+    expect(screen.getAllByText('Imported Seedance').length).toBeGreaterThan(0);
+  });
+
   it('refreshes the selected channel model catalog and reports the result', async () => {
     const showToast = vi.fn();
     const fetchMock = vi.fn().mockResolvedValue({

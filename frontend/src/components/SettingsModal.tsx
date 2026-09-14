@@ -103,6 +103,7 @@ function getVideoCreateEndpoint(protocol: VideoProtocol): { method: 'POST'; path
   if (configuredEndpoint) return configuredEndpoint;
   if (protocol === 'new-api') return { method: 'POST', path: '/v1/video/generations' };
   if (protocol === 'openai') return { method: 'POST', path: '/v1/videos' };
+  if (protocol === 'seedance') return { method: 'POST', path: '/api/v3/contents/generations/tasks' };
   return { method: 'POST', path: '/v1/videos/generations' };
 }
 
@@ -492,7 +493,9 @@ function createExternalVideoModelDraft(config: ExternalVideoModelConfig): VideoM
   const template = getVideoProtocolTemplate(protocol);
   const presetModelId = template.presetModelId;
   const configuredModelId = config.modelId?.trim() || '';
-  const usesPresetModelId = !configuredModelId || configuredModelId === presetModelId;
+  // 外链明确提供的模型 ID 必须保留，即使它恰好与协议预设相同；
+  // 只有缺省模型 ID 才使用工作台预设。
+  const usesPresetModelId = !configuredModelId;
   return {
     id: config.modelKey || generateModelId('video'),
     protocol,
@@ -519,7 +522,7 @@ function patchVideoModelFromExternal(model: VideoModelConfig, config: ExternalVi
   const configuredModelId = config.modelId === undefined ? (protocolChanged ? '' : model.modelId.trim()) : config.modelId.trim();
   const usesPresetModelId = config.modelId === undefined
     ? (protocolChanged || Boolean(model.usesPresetModelId))
-    : (!configuredModelId || configuredModelId === presetModelId);
+    : !configuredModelId;
   return {
     ...model,
     protocol,
@@ -665,61 +668,62 @@ export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelCo
     let cancelled = false;
     queueMicrotask(() => {
       if (cancelled) return;
+      const registry = loadRegistry();
       if (externalModelConfig.type === 'image') {
-        setImageModels((prev) => {
-          const existing = getExternalImageModelMatch(prev, externalModelConfig);
-          const nextModel = existing
-            ? patchImageModelFromExternal(existing, externalModelConfig)
-            : createExternalImageModelDraft(externalModelConfig);
-          setSelectedImageModelId(nextModel.id);
-          // 图片外链目标预先成为两个生图工作流默认值，最终保存时再执行完整性校验。
-          setDefaults((current) => ({ ...current, textToImage: nextModel.id, imageToImage: nextModel.id }));
-          return existing ? prev.map(model => model.id === existing.id ? nextModel : model) : [...prev, nextModel];
-        });
+        const existing = getExternalImageModelMatch(registry.imageModels, externalModelConfig);
+        const nextModel = existing
+          ? patchImageModelFromExternal(existing, externalModelConfig)
+          : createExternalImageModelDraft(externalModelConfig);
+        registry.imageModels = existing
+          ? registry.imageModels.map(model => model.id === existing.id ? nextModel : model)
+          : [...registry.imageModels, nextModel];
+        registry.defaults = { ...registry.defaults, textToImage: nextModel.id, imageToImage: nextModel.id };
+        setSelectedImageModelId(nextModel.id);
       } else if (externalModelConfig.type === 'text') {
-        setTextModels((prev) => {
-          const existing = getExternalTextModelMatch(prev, externalModelConfig);
-          const nextModel = existing
-            ? patchTextModelFromExternal(existing, externalModelConfig)
-            : createExternalTextModelDraft(externalModelConfig);
-          setSelectedTextModelId(nextModel.id);
-          // 单个外链文本模型作为全部文本工作流的初始默认值，用户仍可在保存前分别调整。
-          setDefaults((current) => ({
-            ...current,
-            reversePrompt: nextModel.id,
-            agent: nextModel.id,
-            promptOptimize: nextModel.id,
-            imageDescribe: nextModel.id,
-          }));
-          return existing ? prev.map(model => model.id === existing.id ? nextModel : model) : [...prev, nextModel];
-        });
+        const existing = getExternalTextModelMatch(registry.textModels, externalModelConfig);
+        const nextModel = existing
+          ? patchTextModelFromExternal(existing, externalModelConfig)
+          : createExternalTextModelDraft(externalModelConfig);
+        registry.textModels = existing
+          ? registry.textModels.map(model => model.id === existing.id ? nextModel : model)
+          : [...registry.textModels, nextModel];
+        registry.defaults = {
+          ...registry.defaults,
+          reversePrompt: nextModel.id,
+          agent: nextModel.id,
+          promptOptimize: nextModel.id,
+          imageDescribe: nextModel.id,
+        };
+        setSelectedTextModelId(nextModel.id);
       } else {
-        setVideoModels((prev) => {
-          const existing = getExternalVideoModelMatch(prev, externalModelConfig);
-          const nextModel = existing
-            ? patchVideoModelFromExternal(existing, externalModelConfig)
-            : createExternalVideoModelDraft(externalModelConfig);
-          setSelectedVideoModelId(nextModel.id);
-          // 视频外链目标预先成为视频生成默认值，缺少 API Key 时作为未激活草稿保留。
-          setDefaults((current) => ({ ...current, videoGeneration: nextModel.id }));
-          return existing ? prev.map(model => model.id === existing.id ? nextModel : model) : [...prev, nextModel];
-        });
+        const existing = getExternalVideoModelMatch(registry.videoModels, externalModelConfig);
+        const nextModel = existing
+          ? patchVideoModelFromExternal(existing, externalModelConfig)
+          : createExternalVideoModelDraft(externalModelConfig);
+        registry.videoModels = existing
+          ? registry.videoModels.map(model => model.id === existing.id ? nextModel : model)
+          : [...registry.videoModels, nextModel];
+        registry.defaults = { ...registry.defaults, videoGeneration: nextModel.id };
+        setSelectedVideoModelId(nextModel.id);
       }
-      const readyNoticeKey = externalModelConfig.type === 'image'
-        ? 'settings.externalImageConfigReady'
-        : externalModelConfig.type === 'text'
-          ? 'settings.externalTextConfigReady'
-          : 'settings.externalVideoConfigReady';
-      const needsKeyNoticeKey = externalModelConfig.type === 'image'
-        ? 'settings.externalImageConfigNeedsKey'
-        : externalModelConfig.type === 'text'
-          ? 'settings.externalTextConfigNeedsKey'
-          : 'settings.externalVideoConfigNeedsKey';
-      setExternalConfigNotice(
-        externalModelConfig.apiKey
-          ? t(readyNoticeKey)
-          : t(needsKeyNoticeKey),
-      );
+      saveRegistry(registry);
+      // 外部链接导入会在视频工作台已挂载时发生，保存后立即通知所有工作台同步最新模型注册表。
+      window.dispatchEvent(new Event('flyreq-model-registry-updated'));
+      const persistedRegistry = loadRegistry();
+      const optimizeEnabled = isPromptOptimizeEnabled();
+      setImageModels(persistedRegistry.imageModels.map(cloneImageModel));
+      setTextModels(persistedRegistry.textModels.map(cloneTextModel));
+      setVideoModels(persistedRegistry.videoModels.map(cloneVideoModel));
+      setDefaults({ ...persistedRegistry.defaults });
+      setInitialSnapshot(serializeSettingsSnapshot(createSettingsSnapshot(
+        persistedRegistry.imageModels,
+        persistedRegistry.videoModels,
+        persistedRegistry.textModels,
+        persistedRegistry.defaults,
+        optimizeEnabled,
+      )));
+      setSaveState('saved');
+      setExternalConfigNotice(null);
       setError(null);
       setSuccess(null);
       onExternalModelConfigConsumed?.();
@@ -1408,6 +1412,7 @@ export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelCo
                           { value: 'new-api', label: 'New API' },
                           { value: 'openai', label: 'OpenAI Videos (Sora)' },
                           { value: 'xai', label: 'xAI Videos' },
+                          { value: 'seedance', label: 'Seedance (ARK)' },
                         ]}
                       />
                       {selectedVideoCreateEndpoint && <p className="text-xs text-muted-foreground">

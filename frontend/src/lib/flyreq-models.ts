@@ -36,7 +36,7 @@ export interface TextModelConfig {
   note?: string;
 }
 
-export type PublicVideoProtocol = 'new-api' | 'openai' | 'xai';
+export type PublicVideoProtocol = 'new-api' | 'openai' | 'xai' | 'seedance';
 export type VideoProtocol = PublicVideoProtocol;
 
 export interface VideoModelConfig {
@@ -294,7 +294,7 @@ function normalizeVideoModelConfig(raw: Partial<VideoModelConfig>): VideoModelCo
     || configuredModelId === presetModelId;
   return {
     id,
-    protocol: raw.protocol === 'new-api' || raw.protocol === 'xai' || raw.protocol === 'openai' ? raw.protocol : 'openai',
+    protocol: raw.protocol === 'new-api' || raw.protocol === 'xai' || raw.protocol === 'openai' || raw.protocol === 'seedance' ? raw.protocol : 'openai',
     name: String(raw.name || '').trim(),
     modelId: usesPresetModelId ? '' : configuredModelId,
     usesPresetModelId: usesPresetModelId || undefined,
@@ -431,13 +431,15 @@ function ensureDefaults(raw: Partial<DefaultModels> | undefined, imageModels: Im
   const firstTextModelId = completeTextModels[0]?.id || '';
   const next = { ...DEFAULT_DEFAULTS, ...raw };
 
-  if (!completeImageModels.some((model) => model.id === next.textToImage)) next.textToImage = firstImageModelId;
-  if (!completeImageModels.some((model) => model.id === next.imageToImage)) next.imageToImage = firstImageModelId;
-  if (!completeTextModels.some((model) => model.id === next.reversePrompt)) next.reversePrompt = firstTextModelId;
-  if (!completeTextModels.some((model) => model.id === next.agent)) next.agent = firstTextModelId;
-  if (!completeTextModels.some((model) => model.id === next.promptOptimize)) next.promptOptimize = firstTextModelId;
-  if (!completeTextModels.some((model) => model.id === next.imageDescribe)) next.imageDescribe = firstTextModelId;
-  if (!completeVideoModels.some((model) => model.id === next.videoGeneration)) next.videoGeneration = firstVideoModelId;
+  // Keep a valid model ID even when the model is an incomplete external draft.
+  // SettingsModal uses this pending selection while the user finishes its API key.
+  if (!imageModels.some((model) => model.id === next.textToImage)) next.textToImage = firstImageModelId;
+  if (!imageModels.some((model) => model.id === next.imageToImage)) next.imageToImage = firstImageModelId;
+  if (!textModels.some((model) => model.id === next.reversePrompt)) next.reversePrompt = firstTextModelId;
+  if (!textModels.some((model) => model.id === next.agent)) next.agent = firstTextModelId;
+  if (!textModels.some((model) => model.id === next.promptOptimize)) next.promptOptimize = firstTextModelId;
+  if (!textModels.some((model) => model.id === next.imageDescribe)) next.imageDescribe = firstTextModelId;
+  if (!videoModels.some((model) => model.id === next.videoGeneration)) next.videoGeneration = firstVideoModelId;
 
   return next;
 }

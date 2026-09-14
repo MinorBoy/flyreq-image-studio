@@ -227,7 +227,7 @@ describe('SettingsModal unsaved configuration', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Save now' })).toBeDisabled());
   });
 
-  it('marks configuration imported from an external link as unsaved', async () => {
+  it('persists a complete image configuration imported from an external link', async () => {
     const onConsumed = vi.fn();
     render(
       <LanguageProvider initialLocale="en">
@@ -246,8 +246,13 @@ describe('SettingsModal unsaved configuration', () => {
       </LanguageProvider>,
     );
 
-    expect(await screen.findByText('Unsaved changes')).toBeInTheDocument();
-    expect(screen.getByText('Image model configuration was imported from the external link and set as the image defaults. Save the configuration to apply it.')).toBeInTheDocument();
+    await waitFor(() => {
+      const saved = loadRegistry();
+      expect(saved.imageModels.some(model => model.id === 'external-image-model')).toBe(true);
+      expect(saved.defaults.textToImage).toBe('external-image-model');
+      expect(saved.defaults.imageToImage).toBe('external-image-model');
+    });
+    expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument();
     expect(onConsumed).toHaveBeenCalledOnce();
   });
 
@@ -274,9 +279,12 @@ describe('SettingsModal unsaved configuration', () => {
       </LanguageProvider>,
     );
 
+    await screen.findByText('Pending external model');
+    await waitFor(() => expect(loadRegistry().defaults.textToImage).toBe('pending-external-model'));
+    const imageApiKeyInput = document.querySelector<HTMLInputElement>('input[type="password"]');
+    expect(imageApiKeyInput).not.toBeNull();
+    fireEvent.change(imageApiKeyInput!, { target: { value: 'external-completed-key' } });
     expect(await screen.findByText('Unsaved changes')).toBeInTheDocument();
-    const imageApiKeyInput = document.querySelectorAll<HTMLInputElement>('input[type="password"]')[0];
-    fireEvent.change(imageApiKeyInput, { target: { value: 'external-completed-key' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save configuration' }));
 
     await waitFor(() => {
@@ -306,8 +314,6 @@ describe('SettingsModal unsaved configuration', () => {
       </LanguageProvider>,
     );
 
-    expect(await screen.findByText('Text model configuration was imported from the external link and set as the text defaults. Save the configuration to apply it.')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Save configuration' }));
     await waitFor(() => {
       const saved = loadRegistry();
       expect(saved.textModels.some(model => model.id === 'external-text-model')).toBe(true);
@@ -321,6 +327,8 @@ describe('SettingsModal unsaved configuration', () => {
   });
 
   it('imports a complete external video model and assigns the video default', async () => {
+    const registryUpdated = vi.fn();
+    window.addEventListener('flyreq-model-registry-updated', registryUpdated);
     render(
       <LanguageProvider initialLocale="en">
         <SettingsModal
@@ -340,13 +348,13 @@ describe('SettingsModal unsaved configuration', () => {
       </LanguageProvider>,
     );
 
-    expect(await screen.findByText('Video model configuration was imported from the external link and set as the video default. Save the configuration to apply it.')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Save configuration' }));
     await waitFor(() => {
       const saved = loadRegistry();
       expect(saved.videoModels.some(model => model.id === 'external-video-model')).toBe(true);
       expect(saved.defaults.videoGeneration).toBe('external-video-model');
     });
+    expect(registryUpdated).toHaveBeenCalledOnce();
+    window.removeEventListener('flyreq-model-registry-updated', registryUpdated);
   });
 
   it('persists incomplete text models as inactive drafts', async () => {

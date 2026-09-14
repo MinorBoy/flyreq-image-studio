@@ -148,4 +148,38 @@ describe('视频协议适配器', () => {
     expect(getVideoPollPath('xai', 'request-xai')).toBe('/v1/videos/request-xai');
     expect(normalizeVideoPollResult('xai', { video: { url: 'https://cdn.x.ai/video.mp4' } }, 'https://api.x.ai', 'request-xai')).toEqual({ state: 'completed', remoteUrl: 'https://cdn.x.ai/video.mp4' });
   });
+
+  it('构造 Seedance ARK 请求并从 content.video_url 解析完成结果', () => {
+    const seedanceFiles = {
+      images: [
+        files.images[0],
+        { filename: 'reference-2.png', mimeType: 'image/png', buffer: Buffer.from('image-2') },
+      ],
+      videos: files.videos,
+      audios: files.audios,
+    };
+    const upstream = createVideoRequest('seedance', 'key', request, seedanceFiles);
+
+    expect(upstream.path).toBe('/api/v3/contents/generations/tasks');
+    expect(upstream.init.headers['Content-Type']).toBe('application/json');
+    expect(JSON.parse(upstream.init.body)).toEqual({
+      model: 'video-model',
+      content: [
+        { type: 'text', text: 'A camera move' },
+        { type: 'image_url', image_url: { url: expect.stringMatching(/^data:image\/png;base64,/) }, role: 'first_frame' },
+        { type: 'image_url', image_url: { url: expect.stringMatching(/^data:image\/png;base64,/) }, role: 'reference_image' },
+        { type: 'video_url', video_url: { url: expect.stringMatching(/^data:video\/mp4;base64,/) }, role: 'reference_video' },
+        { type: 'audio_url', audio_url: { url: expect.stringMatching(/^data:audio\/mpeg;base64,/) }, role: 'reference_audio' },
+      ],
+      duration: 8,
+      resolution: '720p',
+      ratio: '16:9',
+    });
+    expect(getCreatedVideoTaskId('seedance', { id: 'task-seedance' })).toBe('task-seedance');
+    expect(getVideoPollPath('seedance', 'task/new')).toBe('/api/v3/contents/generations/tasks/task%2Fnew');
+    expect(normalizeVideoPollResult('seedance', { status: 'succeeded', content: { video_url: 'https://cdn.example/seedance.mp4' } }, 'https://api.example', 'task-seedance')).toEqual({
+      state: 'completed',
+      remoteUrl: 'https://cdn.example/seedance.mp4',
+    });
+  });
 });

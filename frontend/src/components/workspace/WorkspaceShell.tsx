@@ -36,7 +36,7 @@ import {
   type SubmitActions,
 } from '@/lib/workspace-task-service';
 import { cn } from '@/lib/utils';
-import { getCleanUrlAfterExternalModelConfig, parseExternalModelConfig, type ExternalModelConfig } from '@/lib/external-model-config';
+import { getCleanUrlAfterExternalModelConfig, parseExternalModelConfigs, type ExternalModelConfig } from '@/lib/external-model-config';
 
 export function WorkspaceShell() {
   const { locale, t } = useI18n();
@@ -46,7 +46,7 @@ export function WorkspaceShell() {
   const { collapsed: navigationCollapsed, toggleCollapsed: toggleNavigationCollapsed } = useNavigationSidebar();
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [externalModelConfig, setExternalModelConfig] = useState<ExternalModelConfig | null>(null);
+  const [externalModelConfigs, setExternalModelConfigs] = useState<ExternalModelConfig[]>([]);
   const [missingApiKeyDialogOpen, setMissingApiKeyDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'image-generation' | 'video-generation' | 'agent' | 'canvas' | 'assets' | 'reverse-prompt' | 'gif' | 'prompt-gallery'>('image-generation');
@@ -79,14 +79,14 @@ export function WorkspaceShell() {
     if (externalConfigParsedRef.current) return;
 
     const url = new URL(window.location.href);
-    const config = parseExternalModelConfig(url);
-    if (!config) return;
+    const configs = parseExternalModelConfigs(url);
+    if (!configs.length) return;
 
     let cancelled = false;
     queueMicrotask(() => {
       if (cancelled) return;
       externalConfigParsedRef.current = true;
-      setExternalModelConfig(config);
+      setExternalModelConfigs(configs);
       setSettingsOpen(true);
       window.history.replaceState(null, '', getCleanUrlAfterExternalModelConfig(url));
     });
@@ -394,8 +394,8 @@ export function WorkspaceShell() {
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         onApiKeyChange={workspace.setHasApiKey}
-        externalModelConfig={externalModelConfig}
-        onExternalModelConfigConsumed={() => setExternalModelConfig(null)}
+        externalModelConfig={externalModelConfigs[0] || null}
+        onExternalModelConfigConsumed={() => setExternalModelConfigs(prev => prev.slice(1))}
       />
 
       <MissingApiKeyDialog

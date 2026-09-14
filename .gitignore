@@ -67,3 +67,7 @@ frontend/public/workbox-*.js
 
 # other
 infinite-canvas-main/
+
+.playwright/
+.playwright-*/
+

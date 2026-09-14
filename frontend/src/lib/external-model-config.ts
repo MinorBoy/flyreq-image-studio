@@ -43,6 +43,8 @@ export type ExternalVideoModelConfig = ExternalModelConfigBase & {
 
 export type ExternalModelConfig = ExternalImageModelConfig | ExternalTextModelConfig | ExternalVideoModelConfig;
 
+export type ExternalModelConfigs = ExternalModelConfig[];
+
 const CONFIG_QUERY_KEYS = new Set([
   'provider',
   'configureModel',
@@ -83,7 +85,7 @@ function normalizeProvider(value: string | null): ProviderProtocol | undefined {
  * @returns 有效视频协议；无法识别时返回 undefined。
  */
 function normalizeVideoProtocol(value: string | null): PublicVideoProtocol | undefined {
-  return value === 'new-api' || value === 'openai' || value === 'xai' ? value : undefined;
+  return value === 'new-api' || value === 'openai' || value === 'xai' || value === 'seedance' ? value : undefined;
 }
 
 /**
@@ -180,8 +182,11 @@ function normalizeProviderPayload(payload: Record<string, unknown>): ExternalMod
 }
 
 export function parseExternalModelConfig(url: URL): ExternalModelConfig | null {
-  const providerPayload = parseProviderJson(url.searchParams.get('provider'));
-  if (providerPayload) return normalizeProviderPayload(providerPayload);
+  const providerPayloads = url.searchParams.getAll('provider');
+  for (const rawProvider of providerPayloads) {
+    const providerPayload = parseProviderJson(rawProvider);
+    if (providerPayload) return normalizeProviderPayload(providerPayload);
+  }
 
   if (url.searchParams.get('configureModel') !== '1') return null;
   const type = url.searchParams.get('type') || 'image';
@@ -219,6 +224,13 @@ export function parseExternalModelConfig(url: URL): ExternalModelConfig | null {
     supportsTemperature: readBoolean(url.searchParams.get('supportsTemperature') ?? undefined),
     streamImages: readBoolean(url.searchParams.get('streamImages') ?? undefined),
   };
+}
+
+export function parseExternalModelConfigs(url: URL): ExternalModelConfigs {
+  return url.searchParams.getAll('provider')
+    .map(parseProviderJson)
+    .map(payload => payload ? normalizeProviderPayload(payload) : null)
+    .filter((config): config is ExternalModelConfig => Boolean(config));
 }
 
 export function getCleanUrlAfterExternalModelConfig(url: URL): string {

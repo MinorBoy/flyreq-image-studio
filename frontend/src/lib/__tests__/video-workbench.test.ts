@@ -53,7 +53,7 @@ describe('视频模型注册表与工作台配置', () => {
 
   it('视频历史持久化失败时保留内存工作流且记录错误', () => {
     const storageError = new DOMException('quota exceeded', 'QuotaExceededError');
-    vi.spyOn(localStorage, 'setItem').mockImplementation(() => { throw storageError; });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw storageError; });
     const errorLogger = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     expect(() => saveVideoJobs([])).not.toThrow();
