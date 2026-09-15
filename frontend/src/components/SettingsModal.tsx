@@ -608,7 +608,7 @@ export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelCo
       const catalogSources = new Map<string, { protocol: string; baseUrl: string }>();
       registry.imageModels.forEach(model => catalogSources.set(model.id, { protocol: model.protocol, baseUrl: model.baseUrl }));
       registry.textModels.forEach(model => catalogSources.set(model.id, { protocol: model.protocol, baseUrl: model.baseUrl }));
-      registry.videoModels.forEach(model => catalogSources.set(model.id, { protocol: 'openai', baseUrl: model.baseUrl }));
+      registry.videoModels.forEach(model => catalogSources.set(model.id, { protocol: model.protocol, baseUrl: model.baseUrl }));
       const restoredCatalogs = Object.keys(cachedCatalogs).flatMap(channelId => {
         const source = catalogSources.get(channelId);
         const matchingEntry = source ? getModelCatalogCache(channelId, source) : undefined;
@@ -792,7 +792,7 @@ export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelCo
    * @param protocol 模型目录端点使用的鉴权协议。
    * @returns 请求完成后更新对应模型的目录状态，无直接返回值。
    */
-  const handleFetchModels = async (model: { id: string; baseUrl: string; apiKey: string }, protocol: ProviderProtocol): Promise<void> => {
+  const handleFetchModels = async (model: { id: string; baseUrl: string; apiKey: string }, protocol: ProviderProtocol | VideoProtocol): Promise<void> => {
     // 每个渠道独立递增请求版本，来源字段变化时旧响应会因版本不匹配而被丢弃。
     const requestVersion = (modelCatalogRequestVersionsRef.current.get(model.id) || 0) + 1;
     modelCatalogRequestVersionsRef.current.set(model.id, requestVersion);
@@ -1436,7 +1436,7 @@ export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelCo
                         successMessage={t('settings.modelsFetched', { count: modelCatalogs[selectedVideoModel.id]?.options.length || 0 })}
                         emptyMessage={t('settings.noRemoteModels')}
                         staleMessage={t('settings.modelsCacheStale')}
-                        onFetch={() => void handleFetchModels(selectedVideoModel, 'openai')}
+                        onFetch={() => void handleFetchModels(selectedVideoModel, selectedVideoModel.protocol)}
                         onModelIdChange={(modelId) => handleUpdateVideoModel(selectedVideoModel.id, { modelId, usesPresetModelId: !modelId.trim() })}
                       />
                     </div>

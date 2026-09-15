@@ -81,12 +81,14 @@ describe('external model config URL parser', () => {
     expect(parseExternalModelConfig(videoUrl)).toMatchObject({ type: 'video', protocol: 'openai', modelKey: 'video-one', modelId: 'grok-imagine-video' });
   });
 
-  it('accepts New API and xAI video protocols from external links', () => {
+  it('accepts New API, xAI, and Seedance video protocols from external links', () => {
     const newApiUrl = new URL('https://example.com/?configureModel=1&type=video&protocol=new-api&name=NewAPI&modelId=video-model&baseUrl=https%3A%2F%2Fnewapi.example.com');
     const xaiUrl = new URL(`https://example.com/?provider=${encodeURIComponent(JSON.stringify({ type: 'video', protocol: 'xai', name: 'xAI', modelId: 'grok-imagine-video' }))}`);
+    const seedanceUrl = new URL(`https://example.com/?provider=${encodeURIComponent(JSON.stringify({ type: 'video', protocol: 'seedance', name: 'Seedance', modelId: 'doubao-seedance-1-0', baseUrl: 'https://ark.example.com' }))}`);
 
     expect(parseExternalModelConfig(newApiUrl)).toMatchObject({ type: 'video', protocol: 'new-api' });
     expect(parseExternalModelConfig(xaiUrl)).toMatchObject({ type: 'video', protocol: 'xai' });
+    expect(parseExternalModelConfig(seedanceUrl)).toMatchObject({ type: 'video', protocol: 'seedance', modelId: 'doubao-seedance-1-0' });
   });
 
   it('仅在显式 protocol 字段中启用新的 OpenAI Videos 协议', () => {

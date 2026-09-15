@@ -475,7 +475,7 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
   const selectedModel = useMemo(() => models.find(model => model.id === modelId), [modelId, models]);
   const configuredRemoteModelId = selectedModel ? getResolvedVideoModelId(selectedModel) : '';
   const cachedModelCatalog = selectedModel
-    ? getModelCatalogCache(selectedModel.id, { protocol: 'openai', baseUrl: selectedModel.baseUrl })
+    ? getModelCatalogCache(selectedModel.id, { protocol: selectedModel.protocol, baseUrl: selectedModel.baseUrl })
     : undefined;
   const remoteModelOptions = useMemo(() => [
     ...(cachedModelCatalog?.options || []),
@@ -502,12 +502,11 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
       const options = await fetchRemoteModels({
         baseUrl: selectedModel.baseUrl,
         apiKey: selectedModel.apiKey,
-        // 视频协议的模型目录统一按 OpenAI 兼容接口获取，与设置页保持一致。
-        protocol: 'openai',
+        protocol: selectedModel.protocol,
       });
       saveModelCatalogCache({
         channelId: selectedModel.id,
-        protocol: 'openai',
+        protocol: selectedModel.protocol,
         baseUrl: selectedModel.baseUrl,
         options,
       });

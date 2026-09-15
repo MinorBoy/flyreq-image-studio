@@ -12,6 +12,7 @@ import {
   getImageApiFlavor,
   type ImageApiFlavor,
   type ProviderProtocol,
+  type VideoProtocol,
 } from '@/lib/flyreq-models';
 import {
   normalizeModelBaseUrl,
@@ -51,7 +52,7 @@ export interface RemoteModelOption {
  * @param input 上游 Base URL、API Key 与协议。
  * @returns 去重并按模型标识排序的远端模型选项。
  */
-export async function fetchRemoteModels(input: { baseUrl: string; apiKey: string; protocol: ProviderProtocol }): Promise<RemoteModelOption[]> {
+export async function fetchRemoteModels(input: { baseUrl: string; apiKey: string; protocol: ProviderProtocol | VideoProtocol }): Promise<RemoteModelOption[]> {
   if (!input.baseUrl.trim() || !input.apiKey.trim()) throw new Error('请先填写 Base URL 和 API Key');
   const response = await fetch('/api/flyreq/proxy/models', {
     method: 'POST',
