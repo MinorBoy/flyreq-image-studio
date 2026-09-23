@@ -140,7 +140,8 @@ describe('视频协议能力配置', () => {
       size: '1280x720',
       aspectRatio: '16:9',
       resolution: 720,
-    }, { images: Array.from({ length: 10 }, () => ({})), videos: [], audios: [] })).toThrow('参考附件不符合当前协议限制');
+      referenceUrls: { images: Array.from({ length: 10 }, () => 'https://cdn.example/reference.png'), videos: [], audios: [] },
+    }, emptyFiles)).toThrow('参考附件不符合当前协议限制');
   });
 
   it('校验 OpenAI 参考图格式但允许素材尺寸与输出尺寸不同', async () => {

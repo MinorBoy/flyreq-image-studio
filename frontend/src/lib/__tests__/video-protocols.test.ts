@@ -27,10 +27,15 @@ const files = {
   videos: [{ filename: 'reference.mp4', mimeType: 'video/mp4', buffer: Buffer.from('video') }],
   audios: [{ filename: 'reference.mp3', mimeType: 'audio/mpeg', buffer: Buffer.from('audio') }],
 };
+const referenceUrls = {
+  images: ['https://cdn.example/reference.png'],
+  videos: ['https://cdn.example/reference.mp4'],
+  audios: ['https://cdn.example/reference.mp3'],
+};
 
 describe('视频协议适配器', () => {
   it('构造 New API JSON 请求并识别 task_id', () => {
-    const upstream = createVideoRequest('new-api', 'key', request, files);
+    const upstream = createVideoRequest('new-api', 'key', request, { images: [], videos: [], audios: [], referenceUrls });
     expect(upstream.path).toBe('/v1/video/generations');
     expect(upstream.init.headers['Content-Type']).toBe('application/json');
     expect(JSON.parse(upstream.init.body)).toEqual(expect.objectContaining({
@@ -39,18 +44,25 @@ describe('视频协议适配器', () => {
       duration: 8,
       seconds: '8',
       size: '1280x720',
-      image: expect.stringMatching(/^data:image\/png;base64,/),
-      images: [expect.stringMatching(/^data:image\/png;base64,/)],
+      image: referenceUrls.images[0],
+      images: referenceUrls.images,
       metadata: expect.objectContaining({
         resolution: '720p',
-        reference_videos: [expect.stringMatching(/^data:video\/mp4;base64,/)],
-        reference_audios: [expect.stringMatching(/^data:audio\/mpeg;base64,/)],
+        reference_videos: referenceUrls.videos,
+        reference_audios: referenceUrls.audios,
       }),
     }));
+    expect(upstream.init.body).not.toContain('data:');
     expect(getCreatedVideoTaskId('new-api', { task_id: 'task-new' })).toBe('task-new');
     expect(getVideoPollPath('new-api', 'task/new')).toBe('/v1/video/generations/task%2Fnew');
     expect(normalizeVideoPollResult('new-api', { status: 'completed', url: 'https://cdn.example/video.mp4' }, 'https://api.example', 'task-new')).toEqual({ state: 'completed', remoteUrl: 'https://cdn.example/video.mp4' });
   });
+
+  it('拒绝 New API 本地参考文件和非 HTTP(S) URL', () => {
+    expect(() => createVideoRequest('new-api', 'key', request, files)).toThrow('new-api 协议仅支持 HTTP(S) URL 参考媒体');
+    expect(() => createVideoRequest('new-api', 'key', request, { images: [], videos: [], audios: [], referenceUrls: { ...referenceUrls, images: ['data:image/png;base64,abc'] } })).toThrow('参考 URL 无效');
+  });
+
 
   it('构造 OpenAI Videos multipart 请求并使用 content 端点下载', () => {
     const upstream = createVideoRequest('openai', 'key', request, files);
@@ -127,7 +139,7 @@ describe('视频协议适配器', () => {
 
   it('将 2160 清晰度作为 4k 发送给 New API 和 OpenAI', () => {
     const request4k = { ...request, resolution: 2160 };
-    const newApi = createVideoRequest('new-api', 'key', request4k, files);
+    const newApi = createVideoRequest('new-api', 'key', request4k, { images: [], videos: [], audios: [], referenceUrls });
     expect(JSON.parse(newApi.init.body).metadata.resolution).toBe('4k');
 
     const openai = createVideoRequest('openai', 'key', request4k, files);
@@ -135,7 +147,7 @@ describe('视频协议适配器', () => {
   });
 
   it('构造 xAI JSON 请求并识别 request_id 与 video.url', () => {
-    const upstream = createVideoRequest('xai', 'key', request, files);
+    const upstream = createVideoRequest('xai', 'key', request, { ...files, videos: [], audios: [] });
     expect(upstream.path).toBe('/v1/videos/generations');
     expect(JSON.parse(upstream.init.body)).toEqual(expect.objectContaining({
       model: 'video-model',
@@ -147,39 +159,5 @@ describe('视频协议适配器', () => {
     expect(getCreatedVideoTaskId('xai', { request_id: 'request-xai' })).toBe('request-xai');
     expect(getVideoPollPath('xai', 'request-xai')).toBe('/v1/videos/request-xai');
     expect(normalizeVideoPollResult('xai', { video: { url: 'https://cdn.x.ai/video.mp4' } }, 'https://api.x.ai', 'request-xai')).toEqual({ state: 'completed', remoteUrl: 'https://cdn.x.ai/video.mp4' });
-  });
-
-  it('构造 Seedance ARK 请求并从 content.video_url 解析完成结果', () => {
-    const seedanceFiles = {
-      images: [
-        files.images[0],
-        { filename: 'reference-2.png', mimeType: 'image/png', buffer: Buffer.from('image-2') },
-      ],
-      videos: files.videos,
-      audios: files.audios,
-    };
-    const upstream = createVideoRequest('seedance', 'key', request, seedanceFiles);
-
-    expect(upstream.path).toBe('/api/v3/contents/generations/tasks');
-    expect(upstream.init.headers['Content-Type']).toBe('application/json');
-    expect(JSON.parse(upstream.init.body)).toEqual({
-      model: 'video-model',
-      content: [
-        { type: 'text', text: 'A camera move' },
-        { type: 'image_url', image_url: { url: expect.stringMatching(/^data:image\/png;base64,/) }, role: 'first_frame' },
-        { type: 'image_url', image_url: { url: expect.stringMatching(/^data:image\/png;base64,/) }, role: 'reference_image' },
-        { type: 'video_url', video_url: { url: expect.stringMatching(/^data:video\/mp4;base64,/) }, role: 'reference_video' },
-        { type: 'audio_url', audio_url: { url: expect.stringMatching(/^data:audio\/mpeg;base64,/) }, role: 'reference_audio' },
-      ],
-      duration: 8,
-      resolution: '720p',
-      ratio: '16:9',
-    });
-    expect(getCreatedVideoTaskId('seedance', { id: 'task-seedance' })).toBe('task-seedance');
-    expect(getVideoPollPath('seedance', 'task/new')).toBe('/api/v3/contents/generations/tasks/task%2Fnew');
-    expect(normalizeVideoPollResult('seedance', { status: 'succeeded', content: { video_url: 'https://cdn.example/seedance.mp4' } }, 'https://api.example', 'task-seedance')).toEqual({
-      state: 'completed',
-      remoteUrl: 'https://cdn.example/seedance.mp4',
-    });
   });
 });

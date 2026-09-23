@@ -68,6 +68,38 @@ function isValidConfiguredMediaMimeType(value, mediaType) {
 }
 
 /**
+ * 校验并规范化视频参考媒体 URL，只允许 HTTP(S) 绝对地址。
+ * @param {unknown} value 待校验的 URL。
+ * @returns {string | undefined} 去除首尾空白后的原始 URL；无效时返回 undefined。
+ */
+function normalizeVideoReferenceUrl(value) {
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  if (!normalized || /\s/.test(normalized)) return undefined;
+  try {
+    const parsed = new URL(normalized);
+    if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) return undefined;
+    return normalized;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * 读取 multipart 中的一类参考媒体 URL，并拒绝任何非 HTTP(S) 地址。
+ * @param {unknown} rawValue multipart 字段原始值或重复字段数组。
+ * @param {string} label 用户可读的媒体类型名称。
+ * @returns {string[]} 按提交顺序保留的已校验 URL。
+ */
+function normalizeVideoReferenceUrls(rawValue, label) {
+  const values = Array.isArray(rawValue) ? rawValue : rawValue === undefined ? [] : [rawValue];
+  return values.map(value => {
+    const normalized = normalizeVideoReferenceUrl(value);
+    if (!normalized) throw new Error(`${label}参考 URL 无效，仅支持 HTTP(S) URL`);
+    return normalized;
+  });
+}
+
+/**
  * 判断时长预设是否属于当前协议声明的有效时长集合。
  * @param {number} value 待校验的秒数。
  * @param {any} duration 当前协议时长能力。
@@ -94,7 +126,8 @@ function validateProtocolProfile(protocol, profile) {
   if (!profile.settings || !String(profile.settings.baseUrl || '').trim() || typeof profile.settings.presetModelId !== 'string') throw new Error(`视频协议设置模板无效: ${protocol}`);
   if (profile.createEndpoint?.method !== 'POST' || !/^\/v1\/[a-z0-9/-]+$/.test(String(profile.createEndpoint?.path || ''))) throw new Error(`视频协议创建接口无效: ${protocol}`);
   if (!parameters?.duration || !parameters?.size || !parameters?.aspectRatio || !parameters?.resolution) throw new Error(`视频协议参数不完整: ${protocol}`);
-  if (!references || !Number.isInteger(references.images) || references.images < 0 || references.images > MAX_VIDEO_REFERENCE_FILES || !Number.isInteger(references.videos) || references.videos < 0 || references.videos > MAX_VIDEO_REFERENCE_FILES || !Number.isInteger(references.audios) || references.audios < 0 || references.audios > MAX_VIDEO_REFERENCE_FILES) throw new Error(`视频协议附件限制无效: ${protocol}`);
+  if (!references || !['multipart', 'url-only'].includes(references.inputMode || 'multipart') || typeof (references.acceptsUrls ?? false) !== 'boolean' || !Number.isInteger(references.images) || references.images < 0 || references.images > MAX_VIDEO_REFERENCE_FILES || !Number.isInteger(references.videos) || references.videos < 0 || references.videos > MAX_VIDEO_REFERENCE_FILES || !Number.isInteger(references.audios) || references.audios < 0 || references.audios > MAX_VIDEO_REFERENCE_FILES) throw new Error(`视频协议附件限制无效: ${protocol}`);
+  if (references.inputMode === 'url-only' && references.acceptsUrls !== true) throw new Error(`URL-only 视频协议必须声明 acceptsUrls: ${protocol}`);
   if (!Array.isArray(references.imageMimeTypes) || references.imageMimeTypes.length === 0 || references.imageMimeTypes.some(value => !isValidConfiguredMediaMimeType(value, 'image')) || !Array.isArray(references.videoMimeTypes) || references.videoMimeTypes.length === 0 || references.videoMimeTypes.some(value => !isValidConfiguredMediaMimeType(value, 'video')) || !Array.isArray(references.audioMimeTypes) || references.audioMimeTypes.length === 0 || references.audioMimeTypes.some(value => !isValidConfiguredMediaMimeType(value, 'audio')) || typeof references.imageSizeMustMatchOutput !== 'boolean') throw new Error(`视频协议参考附件配置无效: ${protocol}`);
   const duration = parameters.duration;
   if (!['enum', 'range'].includes(duration.mode) || !Array.isArray(duration.presets) || duration.presets.length === 0) throw new Error(`视频协议时长配置无效: ${protocol}`);
@@ -203,8 +236,17 @@ function isVideoProtocol(value) {
  * @returns {any} 本次请求实际生效的协议能力。
  */
 function validateVideoProtocolRequest(config, protocol, modelId, request, files) {
-  const profile = resolveVideoProtocolProfile(config, protocol, modelId, { hasImage: files.images.length > 0 });
+  const referenceUrls = request.referenceUrls || { images: [], videos: [], audios: [] };
+  const hasImage = files.images.length > 0 || referenceUrls.images.length > 0;
+  const profile = resolveVideoProtocolProfile(config, protocol, modelId, { hasImage });
   if (!profile) throw new Error('视频协议无效');
+  const fileCount = files.images.length + files.videos.length + files.audios.length;
+  const urlCount = referenceUrls.images.length + referenceUrls.videos.length + referenceUrls.audios.length;
+  if (profile.references.inputMode === 'url-only' && fileCount > 0) throw new Error(`${protocol} 协议仅支持 HTTP(S) URL 参考媒体，不支持本地参考文件`);
+  if (urlCount > 0 && profile.references.acceptsUrls !== true) throw new Error(`${protocol} 协议不支持 URL 参考媒体，请改用本地文件`);
+  const imageCount = files.images.length + referenceUrls.images.length;
+  const videoCount = files.videos.length + referenceUrls.videos.length;
+  const audioCount = files.audios.length + referenceUrls.audios.length;
   const duration = profile.parameters.duration;
   const durationValid = duration.mode === 'enum'
     ? Array.isArray(duration.values) && duration.values.includes(request.seconds)
@@ -216,7 +258,7 @@ function validateVideoProtocolRequest(config, protocol, modelId, request, files)
   if (aspectRatio.visible && !aspectRatio.values.includes(request.aspectRatio)) throw new Error('视频宽高比不符合当前协议限制');
   const resolution = profile.parameters.resolution;
   if (resolution.visible && !resolution.values.includes(request.resolution) && !(resolution.allowCustom && Number.isInteger(request.resolution) && request.resolution >= 144 && request.resolution <= 4320)) throw new Error('视频清晰度不符合当前协议限制');
-  if (files.images.length > profile.references.images || files.videos.length > profile.references.videos || files.audios.length > profile.references.audios) throw new Error('参考附件不符合当前协议限制');
+  if (imageCount > profile.references.images || videoCount > profile.references.videos || audioCount > profile.references.audios) throw new Error('参考附件不符合当前协议限制');
   return profile;
 }
 
@@ -268,6 +310,8 @@ module.exports = {
   applyJsonMergePatch,
   isPublicVideoProtocol,
   isVideoProtocol,
+  normalizeVideoReferenceUrl,
+  normalizeVideoReferenceUrls,
   resolveVideoProtocolConfig,
   resolveVideoProtocolProfile,
   validateVideoProtocolReferences,

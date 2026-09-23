@@ -1,4 +1,20 @@
-const { isVideoProtocol } = require('./video-protocol-config');
+const { isVideoProtocol, normalizeVideoReferenceUrl } = require('./video-protocol-config');
+
+function toValidatedReferenceUrl(value, label) {
+  const normalized = normalizeVideoReferenceUrl(value);
+  if (!normalized) throw new Error(`${label}参考 URL 无效，仅支持 HTTP(S) URL`);
+  return normalized;
+}
+
+/**
+ * 将 URL 参考媒体按稳定顺序转换为上游请求字段。
+ * @param {string[]} urls 已校验的 URL 列表。
+ * @param {string} label 错误信息中的媒体类型。
+ * @returns {string[]} 原样保留的 URL 列表。
+ */
+function normalizeReferenceUrlList(urls, label) {
+  return (urls || []).map(url => toValidatedReferenceUrl(url, label));
+}
 
 /**
  * 将媒体附件转换为可放入 JSON 请求的数据地址。
@@ -60,16 +76,22 @@ function formatVideoResolution(resolution) {
  * @param {'new-api' | 'openai' | 'xai'} protocol 视频协议。
  * @param {string} apiKey 上游 API Key。
  * @param {{ model: string, prompt: string, resolution: number, size: string, aspectRatio: string, seconds: number }} request 工作台生成参数。
- * @param {{ images: Array<{ filename: string, mimeType: string, buffer: Buffer }>, videos: Array<{ filename: string, mimeType: string, buffer: Buffer }>, audios: Array<{ filename: string, mimeType: string, buffer: Buffer }> }} files 参考附件集合。
+ * @param {{ images: Array<{ filename: string, mimeType: string, buffer: Buffer }>, videos: Array<{ filename: string, mimeType: string, buffer: Buffer }>, audios: Array<{ filename: string, mimeType: string, buffer: Buffer }>, referenceUrls?: { images?: string[], videos?: string[], audios?: string[] } }} files 参考附件集合。
  * @returns {{ path: string, init: { method: string, headers: Record<string, string>, body: string | FormData } }} 上游路径和 fetch 参数。
  */
 function createVideoRequest(protocol, apiKey, request, files) {
+  if (!isVideoProtocol(protocol)) throw new Error(`不支持的视频协议: ${protocol}`);
   const authorization = { Authorization: `Bearer ${apiKey}` };
   const images = files.images || [];
   const videos = files.videos || [];
   const audios = files.audios || [];
+  const referenceUrls = files.referenceUrls || {};
+  const imageUrls = normalizeReferenceUrlList(referenceUrls.images, '图片');
+  const videoUrls = normalizeReferenceUrlList(referenceUrls.videos, '视频');
+  const audioUrls = normalizeReferenceUrlList(referenceUrls.audios, '音频');
   const image = images[0];
   if (protocol === 'openai') {
+    if (imageUrls.length + videoUrls.length + audioUrls.length > 0) throw new Error('openai 协议不支持 URL 参考媒体，请改用本地文件');
     const body = new FormData();
     body.append('model', request.model);
     body.append('prompt', request.prompt);
@@ -85,9 +107,10 @@ function createVideoRequest(protocol, apiKey, request, files) {
   }
 
   if (protocol === 'new-api') {
-    const imageDataUrls = images.map(toMediaDataUrl);
-    const referenceVideos = videos.map(toMediaDataUrl);
-    const referenceAudios = audios.map(toMediaDataUrl);
+    if (images.length + videos.length + audios.length > 0) throw new Error('new-api 协议仅支持 HTTP(S) URL 参考媒体，不支持本地参考文件');
+    const imageReferences = imageUrls;
+    const referenceVideos = videoUrls;
+    const referenceAudios = audioUrls;
     const metadata = {
       resolution: formatVideoResolution(request.resolution),
     };
@@ -102,9 +125,9 @@ function createVideoRequest(protocol, apiKey, request, files) {
       metadata,
     };
     if (request.size !== 'auto') payload.size = request.size;
-    if (imageDataUrls.length > 0) {
-      payload.image = imageDataUrls[0];
-      payload.images = imageDataUrls;
+    if (imageReferences.length > 0) {
+      payload.image = imageReferences[0];
+      payload.images = imageReferences;
     }
     return {
       path: '/v1/video/generations',
@@ -113,6 +136,8 @@ function createVideoRequest(protocol, apiKey, request, files) {
   }
 
   const payload = { model: request.model, prompt: request.prompt, duration: request.seconds, resolution: formatVideoResolution(request.resolution), aspect_ratio: request.aspectRatio };
+  if (videos.length > 0 || audios.length > 0) throw new Error('xai 协议不支持参考视频或参考音频');
+  if (imageUrls.length + videoUrls.length + audioUrls.length > 0) throw new Error('xai 协议不支持 URL 参考媒体，请改用本地文件');
   const imageDataUrl = toMediaDataUrl(image);
   if (imageDataUrl) payload.image = imageDataUrl;
   return {

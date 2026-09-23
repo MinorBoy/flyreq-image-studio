@@ -23,7 +23,7 @@ export interface VideoProtocolProfile {
     aspectRatio: { visible: boolean; values: string[] };
     resolution: { visible: boolean; values: number[]; allowCustom: boolean };
   };
-  references: { images: number; videos: number; audios: number; imageMimeTypes: string[]; videoMimeTypes: string[]; audioMimeTypes: string[]; imageSizeMustMatchOutput: boolean };
+  references: { inputMode: 'multipart' | 'url-only'; acceptsUrls: boolean; images: number; videos: number; audios: number; imageMimeTypes: string[]; videoMimeTypes: string[]; audioMimeTypes: string[]; imageSizeMustMatchOutput: boolean };
   modelProfiles: Array<{ modelPrefix: string; requiresImage: boolean; patch: Partial<VideoProtocolProfile> }>;
 }
 
@@ -216,6 +216,40 @@ export function isValidVideoSize(value: string): boolean {
  */
 export function isValidVideoDuration(value: number): boolean {
   return Number.isInteger(value) && value >= 1 && value <= 60;
+}
+
+/**
+ * 校验并规范化视频参考媒体 URL，只允许 HTTP(S) 绝对地址。
+ * @param value 用户输入的 URL。
+ * @returns 去除首尾空白后的合法 URL；无效值返回 undefined。
+ */
+export function normalizeVideoReferenceUrl(value: string): string | undefined {
+  const normalized = value.trim();
+  if (!normalized || /\s/.test(normalized)) return undefined;
+  try {
+    const parsed = new URL(normalized);
+    return ['http:', 'https:'].includes(parsed.protocol) && parsed.hostname ? normalized : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * 判断协议是否支持 URL 参考媒体输入。
+ * @param profile 当前视频协议能力。
+ * @returns 支持 URL 参考媒体时返回 true。
+ */
+export function videoProtocolAcceptsUrls(profile: VideoProtocolProfile): boolean {
+  return profile.references.acceptsUrls === true;
+}
+
+/**
+ * 判断当前协议是否要求参考媒体只能通过 URL 传入。
+ * @param profile 当前视频协议能力。
+ * @returns 仅允许 URL 输入时返回 true。
+ */
+export function videoProtocolRequiresUrls(profile: VideoProtocolProfile): boolean {
+  return profile.references.inputMode === 'url-only';
 }
 
 /**

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { ArrowUp, Check, ChevronDown, CircleStop, Clock3, CloudUpload, Copy, Download, FileAudio, FileImage, FileVideo, FolderPlus, Images, Info, Loader2, Maximize, RefreshCw, ScanLine, SlidersHorizontal, Sparkles, Trash2, Video, X } from 'lucide-react';
+import { ArrowUp, Check, ChevronDown, CircleStop, Clock3, CloudUpload, Copy, Download, FileAudio, FileImage, FileVideo, FolderPlus, Images, Info, Loader2, Maximize, Plus, RefreshCw, ScanLine, SlidersHorizontal, Sparkles, Trash2, Video, X } from 'lucide-react';
 import { useI18n } from '@/components/LanguageProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,7 @@ import {
   type StoredVideoJob,
   type VideoReferenceFiles,
 } from '@/lib/video-job-store';
-import { getVideoProtocolDurations, getVideoResolutionLabel, getVideoWorkspaceConfig, isAllowedVideoReferenceMimeType, isValidVideoDuration, isValidVideoProtocolDuration, isValidVideoResolution, isValidVideoSize, resolveVideoProtocolProfile } from '@/lib/video-config';
+import { getVideoProtocolDurations, getVideoResolutionLabel, getVideoWorkspaceConfig, isAllowedVideoReferenceMimeType, isValidVideoDuration, isValidVideoProtocolDuration, isValidVideoResolution, isValidVideoSize, normalizeVideoReferenceUrl, resolveVideoProtocolProfile, videoProtocolAcceptsUrls, videoProtocolRequiresUrls } from '@/lib/video-config';
 import { generateModelId } from '@/lib/flyreq-models';
 import { requireDefaultConfiguredTextModel } from '@/lib/model-endpoints';
 import { streamPromptOptimize, type StreamPromptOptimizeHandle } from '@/lib/prompt-optimize-client';
@@ -51,6 +51,23 @@ interface VideoGenerationWorkspaceProps {
 interface MediaAttachmentTileProps {
   file: File;
   onRemove: () => void;
+}
+
+interface VideoReferenceUrlTileProps {
+  url: string;
+  label: string;
+  removeLabel: string;
+  onRemove: () => void;
+}
+
+interface VideoReferenceUrlInputProps {
+  label: string;
+  value: string;
+  placeholder: string;
+  addLabel: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+  onAdd: () => void;
 }
 
 interface VideoReferenceImageChipsProps {
@@ -303,6 +320,41 @@ function MediaAttachmentTile({ file, onRemove }: MediaAttachmentTileProps) {
 }
 
 /**
+ * 渲染 HTTP(S) 参考素材地址，并提供删除操作。
+ * @param props 参考地址、媒体类型标签和删除回调。
+ * @returns 可换行显示且不会横向撑破工作台的 URL 标签。
+ */
+function VideoReferenceUrlTile({ url, label, removeLabel, onRemove }: VideoReferenceUrlTileProps) {
+  return (
+    <div className="group relative flex min-h-16 max-w-full min-w-40 items-center gap-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 px-2.5 py-2 pr-8">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary"><span className="text-[10px] font-semibold">URL</span></div>
+      <div className="min-w-0 text-left">
+        <div className="text-[10px] font-semibold uppercase text-muted-foreground">{label}</div>
+        <div className="break-all text-[11px] leading-4 text-foreground" title={url}>{url}</div>
+      </div>
+      <Button type="button" variant="secondary" size="icon-xs" onClick={onRemove} className="absolute right-1 top-1 rounded-full" title={removeLabel} aria-label={removeLabel}>
+        <X className="size-3" />
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * 渲染单个参考媒体 URL 输入行。
+ * @param props 标签、输入值、按钮文案和交互回调。
+ * @returns 可在窄屏换行的 URL 输入控件。
+ */
+function VideoReferenceUrlInput({ label, value, placeholder, addLabel, disabled, onChange, onAdd }: VideoReferenceUrlInputProps) {
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-1.5">
+      <label className="sr-only" htmlFor={`video-reference-url-${label}`}>{label}</label>
+      <Input id={`video-reference-url-${label}`} value={value} disabled={disabled} onChange={event => onChange(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); onAdd(); } }} placeholder={placeholder} className="h-8 min-w-0 flex-1 text-xs" />
+      <Button type="button" variant="outline" size="sm" disabled={disabled || !value.trim()} onClick={onAdd} className="shrink-0 gap-1.5"><Plus className="size-3.5" />{addLabel}</Button>
+    </div>
+  );
+}
+
+/**
  * 将视频参考图片适配到工作台统一的图片附件交互模块。
  * @param props 参考图片列表、删除回调和当前提示词。
  * @returns 复用生图工作台能力的图片缩略图、预览、复制及素材库操作区域。
@@ -419,6 +471,10 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [referenceVideos, setReferenceVideos] = useState<File[]>([]);
   const [referenceAudios, setReferenceAudios] = useState<File[]>([]);
+  const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
+  const [referenceVideoUrls, setReferenceVideoUrls] = useState<string[]>([]);
+  const [referenceAudioUrls, setReferenceAudioUrls] = useState<string[]>([]);
+  const [referenceUrlDrafts, setReferenceUrlDrafts] = useState({ images: '', videos: '', audios: '' });
   const [assetPickerOpen, setAssetPickerOpen] = useState(false);
   const [mediaAssetPickerOpen, setMediaAssetPickerOpen] = useState(false);
   const [resolution, setResolution] = useState(config.resolutions[0] || 720);
@@ -596,8 +652,8 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
     });
   }, []);
   const protocolProfile = useMemo(
-    () => resolveVideoProtocolProfile(requestModel?.protocol || 'new-api', requestModel ? getResolvedVideoModelId(requestModel) : '', referenceImages.length > 0),
-    [referenceImages.length, requestModel],
+    () => resolveVideoProtocolProfile(requestModel?.protocol || 'new-api', requestModel ? getResolvedVideoModelId(requestModel) : '', referenceImages.length + referenceImageUrls.length > 0),
+    [referenceImageUrls.length, referenceImages.length, requestModel],
   );
   const maxReferenceImages = Math.min(config.maxRefImages, protocolProfile.references.images);
   const maxReferenceVideos = Math.min(config.maxRefVideos, protocolProfile.references.videos);
@@ -991,6 +1047,10 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
    * @returns 无返回值，合法文件会追加到对应状态。
    */
   const addReferenceFiles = useCallback((files: File[]) => {
+    if (videoProtocolRequiresUrls(protocolProfile)) {
+      showToast(t('video.urlOnlyReferenceError'), 'error');
+      return;
+    }
     const images = files.filter(file => file.type.startsWith('image/'));
     const videos = files.filter(file => file.type.startsWith('video/'));
     const audios = files.filter(file => file.type.startsWith('audio/'));
@@ -1018,7 +1078,40 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
       if (current.length + validAudios.length > maxReferenceAudios) showToast(t('video.audioLimit', { max: maxReferenceAudios }), 'error');
       return [...current, ...validAudios].slice(0, maxReferenceAudios);
     });
-  }, [config.maxReferenceAudioBytes, config.maxReferenceImageBytes, config.maxReferenceVideoBytes, maxReferenceAudios, maxReferenceImages, maxReferenceVideos, protocolProfile.references.audioMimeTypes, protocolProfile.references.imageMimeTypes, protocolProfile.references.videoMimeTypes, showToast, t]);
+  }, [config.maxReferenceAudioBytes, config.maxReferenceImageBytes, config.maxReferenceVideoBytes, maxReferenceAudios, maxReferenceImages, maxReferenceVideos, protocolProfile, showToast, t]);
+
+  /**
+   * 校验并追加一种类型的 HTTP(S) 参考素材地址。
+   * @param kind 参考媒体类型。
+   * @returns 当前输入框中的地址合法并追加成功时清空输入框。
+   */
+  const addReferenceUrl = useCallback((kind: 'images' | 'videos' | 'audios'): void => {
+    if (!videoProtocolAcceptsUrls(protocolProfile)) {
+      showToast(t('video.urlReferenceUnsupported'), 'error');
+      return;
+    }
+    const draft = referenceUrlDrafts[kind];
+    const normalized = normalizeVideoReferenceUrl(draft);
+    if (!normalized) {
+      showToast(t('video.invalidReferenceUrl'), 'error');
+      return;
+    }
+    const max = kind === 'images' ? maxReferenceImages : kind === 'videos' ? maxReferenceVideos : maxReferenceAudios;
+    const fileCount = kind === 'images' ? referenceImages.length : kind === 'videos' ? referenceVideos.length : referenceAudios.length;
+    const currentUrls = kind === 'images' ? referenceImageUrls : kind === 'videos' ? referenceVideoUrls : referenceAudioUrls;
+    if (fileCount + currentUrls.length >= max) {
+      showToast(t(kind === 'images' ? 'video.imageLimit' : kind === 'videos' ? 'video.videoLimit' : 'video.audioLimit', { max }), 'error');
+      return;
+    }
+    if (currentUrls.includes(normalized)) {
+      setReferenceUrlDrafts(current => ({ ...current, [kind]: '' }));
+      return;
+    }
+    if (kind === 'images') setReferenceImageUrls(current => [...current, normalized]);
+    if (kind === 'videos') setReferenceVideoUrls(current => [...current, normalized]);
+    if (kind === 'audios') setReferenceAudioUrls(current => [...current, normalized]);
+    setReferenceUrlDrafts(current => ({ ...current, [kind]: '' }));
+  }, [maxReferenceAudios, maxReferenceImages, maxReferenceVideos, protocolProfile, referenceAudioUrls, referenceAudios.length, referenceImageUrls, referenceImages.length, referenceUrlDrafts, referenceVideoUrls, referenceVideos.length, showToast, t]);
 
   useEffect(() => {
     /**
@@ -1057,6 +1150,10 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
    * @returns 无返回值，素材读取完成后更新参考图状态。
    */
   const handleImportImageAssets = useCallback(async (selectedAssets: ImageAsset[]): Promise<void> => {
+    if (videoProtocolRequiresUrls(protocolProfile)) {
+      showToast(t('video.urlOnlyReferenceError'), 'error');
+      return;
+    }
     const remaining = Math.max(0, maxReferenceImages - referenceImages.length);
     if (remaining === 0) {
       showToast(t('video.imageLimit', { max: maxReferenceImages }), 'error');
@@ -1083,10 +1180,14 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
     } catch {
       showToast(t('video.assetImportFailed'), 'error');
     }
-  }, [config.maxReferenceImageBytes, maxReferenceImages, protocolProfile.references.imageMimeTypes, referenceImages.length, showToast, t]);
+  }, [config.maxReferenceImageBytes, maxReferenceImages, protocolProfile, referenceImages.length, showToast, t]);
 
   /** 将统一素材库选择结果按类型转换为参考文件，并复用当前协议校验规则。 */
   const handleImportMediaAssets = useCallback(async (selectedAssets: AssetItem[]): Promise<void> => {
+    if (videoProtocolRequiresUrls(protocolProfile)) {
+      showToast(t('video.urlOnlyReferenceError'), 'error');
+      return;
+    }
     const imageAssets = selectedAssets.filter((asset): asset is ImageAsset => asset.kind === 'image' || !asset.kind);
     const videoAssets = selectedAssets.filter((asset): asset is MediaAsset => asset.kind === 'video');
     const audioAssets = selectedAssets.filter((asset): asset is MediaAsset => asset.kind === 'audio');
@@ -1109,7 +1210,7 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
     if (images.length) setReferenceImages(current => [...current, ...images].slice(0, maxReferenceImages));
     if (videos.length) setReferenceVideos(current => [...current, ...videos].slice(0, maxReferenceVideos));
     if (audios.length) setReferenceAudios(current => [...current, ...audios].slice(0, maxReferenceAudios));
-  }, [config.maxReferenceAudioBytes, config.maxReferenceImageBytes, config.maxReferenceVideoBytes, maxReferenceAudios, maxReferenceImages, maxReferenceVideos, protocolProfile.references.audioMimeTypes, protocolProfile.references.imageMimeTypes, protocolProfile.references.videoMimeTypes, referenceAudios.length, referenceImages.length, referenceVideos.length]);
+  }, [config.maxReferenceAudioBytes, config.maxReferenceImageBytes, config.maxReferenceVideoBytes, maxReferenceAudios, maxReferenceImages, maxReferenceVideos, protocolProfile, referenceAudios.length, referenceImages.length, referenceVideos.length, showToast, t]);
 
   const activeResolution = resolutionMode === 'custom' ? Number(customResolution) : resolution;
   const resolutionCapability = protocolProfile.parameters.resolution;
@@ -1174,11 +1275,15 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
     || (sizeCapability.allowCustom && isValidVideoSize(activeVideoSize));
   const activeAspectRatioValid = !protocolProfile.parameters.aspectRatio.visible || protocolProfile.parameters.aspectRatio.values.includes(activeAspectRatio);
   const activeDurationValid = Boolean(selectedModel && isValidVideoProtocolDuration(protocolProfile, activeSeconds));
-  const activeReferenceImageCountValid = referenceImages.length <= maxReferenceImages;
+  const activeReferenceImageCountValid = referenceImages.length + referenceImageUrls.length <= maxReferenceImages;
   const activeReferenceImageMimeTypesValid = referenceImages.every(file => isAllowedVideoReferenceMimeType(file.type, protocolProfile.references.imageMimeTypes));
-  const activeReferenceImagesValid = activeReferenceImageCountValid && activeReferenceImageMimeTypesValid;
-  const activeReferenceVideosValid = referenceVideos.length <= maxReferenceVideos && referenceVideos.every(file => isAllowedVideoReferenceMimeType(file.type, protocolProfile.references.videoMimeTypes));
-  const activeReferenceAudiosValid = referenceAudios.length <= maxReferenceAudios && referenceAudios.every(file => isAllowedVideoReferenceMimeType(file.type, protocolProfile.references.audioMimeTypes));
+  const activeReferenceVideosValid = referenceVideos.length + referenceVideoUrls.length <= maxReferenceVideos && referenceVideos.every(file => isAllowedVideoReferenceMimeType(file.type, protocolProfile.references.videoMimeTypes));
+  const activeReferenceAudiosValid = referenceAudios.length + referenceAudioUrls.length <= maxReferenceAudios && referenceAudios.every(file => isAllowedVideoReferenceMimeType(file.type, protocolProfile.references.audioMimeTypes));
+  const hasReferenceUrls = referenceImageUrls.length + referenceVideoUrls.length + referenceAudioUrls.length > 0;
+  const hasReferenceFiles = referenceImages.length + referenceVideos.length + referenceAudios.length > 0;
+  const activeReferenceUrlSupportValid = (!hasReferenceUrls || videoProtocolAcceptsUrls(protocolProfile)) && (!videoProtocolRequiresUrls(protocolProfile) || !hasReferenceFiles);
+  const activeReferenceImagesValid = activeReferenceImageCountValid && activeReferenceImageMimeTypesValid && activeReferenceUrlSupportValid;
+
   const activePromptVariants = useMemo(
     () => Array.from({ length: parallelCount }, (_, index) => promptVariants[index] || ''),
     [parallelCount, promptVariants],
@@ -1198,6 +1303,10 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
     if (!activeResolutionValid) { showToast(t('video.invalidResolution'), 'error'); return; }
     if (!activeVideoSizeValid || !activeAspectRatioValid) { showToast(t('video.invalidSize'), 'error'); return; }
     if (!activeDurationValid) { showToast(t('video.invalidDuration'), 'error'); return; }
+    if (!activeReferenceUrlSupportValid) {
+      showToast(videoProtocolRequiresUrls(protocolProfile) ? t('video.urlOnlyReferenceError') : t('video.urlReferenceUnsupported'), 'error');
+      return;
+    }
     if (!activeReferenceImageCountValid) { showToast(t('video.imageLimit', { max: maxReferenceImages }), 'error'); return; }
     if (!activeReferenceImageMimeTypesValid) { showToast(t('video.unsupportedReferenceImageFormat'), 'error'); return; }
     if (!activeReferenceVideosValid) { showToast(t('video.unsupportedReferenceVideo'), 'error'); return; }
@@ -1230,6 +1339,11 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
       referenceVideos: referenceVideos.map(file => ({ name: file.name, type: file.type, size: file.size, lastModified: file.lastModified })),
       referenceAudios: referenceAudios.map(file => ({ name: file.name, type: file.type, size: file.size, lastModified: file.lastModified })),
       referenceImages: referenceImages.map(file => ({ name: file.name, type: file.type, size: file.size, lastModified: file.lastModified })),
+      referenceUrls: {
+        images: [...referenceImageUrls],
+        videos: [...referenceVideoUrls],
+        audios: [...referenceAudioUrls],
+      },
       referenceStorageId,
       createdAt: batchCreatedAt,
     }));
@@ -1256,7 +1370,21 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
     setJobs(current => [...batchJobs].reverse().concat(current));
     setSubmitting(true);
     try {
-      const input = { model: requestModel || selectedModel, prompt: prompt.trim(), resolution: activeProtocolResolution, size: activeVideoSize, aspectRatio: activeAspectRatio, seconds: activeSeconds, referenceImages, referenceVideos, referenceAudios, promptVariants: submitPromptVariants };
+      const input = {
+        model: requestModel || selectedModel,
+        prompt: prompt.trim(),
+        resolution: activeProtocolResolution,
+        size: activeVideoSize,
+        aspectRatio: activeAspectRatio,
+        seconds: activeSeconds,
+        referenceImages,
+        referenceVideos,
+        referenceAudios,
+        referenceImageUrls,
+        referenceVideoUrls,
+        referenceAudioUrls,
+        promptVariants: submitPromptVariants,
+      };
       const tasks = parallelCount > 1 ? await createVideoTasks(input, parallelCount) : [await createVideoTask(input)];
       const taskByJobId = new Map(batchJobs.map((job, index) => [job.id, tasks[index]]));
       setJobs(current => current.map(item => {
@@ -1266,6 +1394,10 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
       setReferenceImages([]);
       setReferenceVideos([]);
       setReferenceAudios([]);
+      setReferenceImageUrls([]);
+      setReferenceVideoUrls([]);
+      setReferenceAudioUrls([]);
+      setReferenceUrlDrafts({ images: '', videos: '', audios: '' });
       setPromptVariants([]);
       setPromptVariantsOpen(false);
     } catch (error) {
@@ -1276,7 +1408,7 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
     } finally {
       setSubmitting(false);
     }
-  }, [activeAspectRatio, activeAspectRatioValid, activeDurationValid, activeProtocolResolution, activeReferenceAudiosValid, activeReferenceImageCountValid, activeReferenceImageMimeTypesValid, activeReferenceVideosValid, activeResolutionValid, activeSeconds, activeVideoSize, activeVideoSizeValid, maxReferenceImages, onConfigureApiKey, parallelCount, prompt, referenceAudios, referenceImages, requestModel, selectedModel, referenceVideos, showToast, submitPromptVariants, t]);
+  }, [activeAspectRatio, activeAspectRatioValid, activeDurationValid, activeProtocolResolution, activeReferenceAudiosValid, activeReferenceImageCountValid, activeReferenceImageMimeTypesValid, activeReferenceUrlSupportValid, activeReferenceVideosValid, activeResolutionValid, activeSeconds, activeVideoSize, activeVideoSizeValid, maxReferenceImages, onConfigureApiKey, parallelCount, prompt, protocolProfile, referenceAudioUrls, referenceAudios, referenceImageUrls, referenceImages, referenceVideoUrls, referenceVideos, requestModel, selectedModel, showToast, submitPromptVariants, t]);
 
   /**
    * 使用默认文本模型流式优化当前视频提示词。
@@ -1483,6 +1615,10 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
       setReferenceImages(restoredReferences.images);
       setReferenceVideos(restoredReferences.videos);
       setReferenceAudios(restoredReferences.audios);
+      setReferenceImageUrls(job.referenceUrls?.images || []);
+      setReferenceVideoUrls(job.referenceUrls?.videos || []);
+      setReferenceAudioUrls(job.referenceUrls?.audios || []);
+      setReferenceUrlDrafts({ images: '', videos: '', audios: '' });
       const resolutionIsPreset = restoredProfile.parameters.resolution.values.includes(job.resolution);
       setResolutionMode(resolutionIsPreset ? 'preset' : 'custom');
       if (!resolutionIsPreset) setCustomResolution(String(job.resolution));
@@ -1504,12 +1640,16 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
     setReferenceImages([]);
     setReferenceVideos([]);
     setReferenceAudios([]);
+    setReferenceImageUrls([]);
+    setReferenceVideoUrls([]);
+    setReferenceAudioUrls([]);
+    setReferenceUrlDrafts({ images: '', videos: '', audios: '' });
     setPromptVariants([]);
     setPromptVariantsOpen(false);
   }, []);
 
   const parameterButton = 'h-8 shrink-0 rounded-md border border-border bg-background px-2.5 text-xs transition-colors hover:bg-muted';
-  const canClear = Boolean(prompt.trim() || activePromptVariants.some(value => value.trim()) || referenceImages.length || referenceVideos.length || referenceAudios.length);
+  const canClear = Boolean(prompt.trim() || activePromptVariants.some(value => value.trim()) || hasReferenceFiles || hasReferenceUrls);
   const canSubmit = Boolean(
     prompt.trim()
     && modelId
@@ -1552,31 +1692,47 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
                       <span className="text-sm font-medium">{t('video.referenceMediaOptional')}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
-                    <label htmlFor="image-reference-input" className={cn('group flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-md px-2 py-1.5 text-center hover:bg-primary/10', maxReferenceImages === 0 && 'pointer-events-none opacity-40')}>
+                    <label htmlFor="image-reference-input" className={cn('group flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-md px-2 py-1.5 text-center hover:bg-primary/10', maxReferenceImages === 0 && 'pointer-events-none opacity-40', videoProtocolRequiresUrls(protocolProfile) && 'pointer-events-none opacity-40')}>
                       <FileImage className="size-5 text-muted-foreground transition-colors group-hover:text-primary" />
                       <span className="max-w-full truncate text-xs font-medium sm:text-sm">{t('video.addImage')}</span>
-                      <span className="text-[10px] text-muted-foreground">{t('video.attachmentCount', { count: referenceImages.length, max: maxReferenceImages })}</span>
+                      <span className="text-[10px] text-muted-foreground">{t('video.attachmentCount', { count: referenceImages.length + referenceImageUrls.length, max: maxReferenceImages })}</span>
                     </label>
-                    <label htmlFor="video-reference-input" className={cn('group flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-md px-2 py-1.5 text-center hover:bg-primary/10', maxReferenceVideos === 0 && 'pointer-events-none opacity-40')}>
+                    <label htmlFor="video-reference-input" className={cn('group flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-md px-2 py-1.5 text-center hover:bg-primary/10', maxReferenceVideos === 0 && 'pointer-events-none opacity-40', videoProtocolRequiresUrls(protocolProfile) && 'pointer-events-none opacity-40')}>
                       <FileVideo className="size-5 text-muted-foreground transition-colors group-hover:text-primary" />
                       <span className="max-w-full truncate text-xs font-medium sm:text-sm">{t('video.addVideo')}</span>
-                      <span className="text-[10px] text-muted-foreground">{t('video.attachmentCount', { count: referenceVideos.length, max: maxReferenceVideos })}</span>
+                      <span className="text-[10px] text-muted-foreground">{t('video.attachmentCount', { count: referenceVideos.length + referenceVideoUrls.length, max: maxReferenceVideos })}</span>
                     </label>
-                    <label htmlFor="audio-reference-input" className={cn('group flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-md px-2 py-1.5 text-center hover:bg-primary/10', maxReferenceAudios === 0 && 'pointer-events-none opacity-40')}>
+                    <label htmlFor="audio-reference-input" className={cn('group flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-md px-2 py-1.5 text-center hover:bg-primary/10', maxReferenceAudios === 0 && 'pointer-events-none opacity-40', videoProtocolRequiresUrls(protocolProfile) && 'pointer-events-none opacity-40')}>
                       <FileAudio className="size-5 text-muted-foreground transition-colors group-hover:text-primary" />
                       <span className="max-w-full truncate text-xs font-medium sm:text-sm">{t('video.addAudio')}</span>
-                      <span className="text-[10px] text-muted-foreground">{t('video.attachmentCount', { count: referenceAudios.length, max: maxReferenceAudios })}</span>
+                      <span className="text-[10px] text-muted-foreground">{t('video.attachmentCount', { count: referenceAudios.length + referenceAudioUrls.length, max: maxReferenceAudios })}</span>
                     </label>
                     </div>
                   </div>
-                  <button type="button" onClick={() => setMediaAssetPickerOpen(true)} disabled={referenceImages.length >= maxReferenceImages && referenceVideos.length >= maxReferenceVideos && referenceAudios.length >= maxReferenceAudios} className="col-span-2 flex min-h-14 items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-center text-sm font-medium transition-colors hover:bg-primary/10 disabled:opacity-40 sm:col-span-4"><Images className="size-5" />{t('video.imageAssets')}</button>
+                  <button type="button" onClick={() => setMediaAssetPickerOpen(true)} disabled={videoProtocolRequiresUrls(protocolProfile) || (referenceImages.length >= maxReferenceImages && referenceVideos.length >= maxReferenceVideos && referenceAudios.length >= maxReferenceAudios)} className="col-span-2 flex min-h-14 items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-center text-sm font-medium transition-colors hover:bg-primary/10 disabled:opacity-40 sm:col-span-4"><Images className="size-5" />{t('video.imageAssets')}</button>
                 </div>
               </div>
-              {(referenceImages.length > 0 || referenceVideos.length > 0 || referenceAudios.length > 0) && (
+              {(hasReferenceFiles || hasReferenceUrls) && (
                 <div className="flex flex-wrap gap-2 px-4 pb-2">
                   {referenceImages.length > 0 && <VideoReferenceImageChips files={referenceImages} prompt={prompt} onRemove={id => setReferenceImages(current => current.filter(file => `${file.name}-${file.lastModified}` !== id))} />}
                   {referenceVideos.map((file, index) => <MediaAttachmentTile key={`video-${file.name}-${file.lastModified}`} file={file} onRemove={() => setReferenceVideos(current => current.filter((_, itemIndex) => itemIndex !== index))} />)}
                   {referenceAudios.map((file, index) => <MediaAttachmentTile key={`audio-${file.name}-${file.lastModified}`} file={file} onRemove={() => setReferenceAudios(current => current.filter((_, itemIndex) => itemIndex !== index))} />)}
+                  {referenceImageUrls.map(url => <VideoReferenceUrlTile key={`image-url-${url}`} url={url} label={t('video.referenceImages')} removeLabel={t('video.removeUrl', { type: t('video.referenceImages') })} onRemove={() => setReferenceImageUrls(current => current.filter(item => item !== url))} />)}
+                  {referenceVideoUrls.map(url => <VideoReferenceUrlTile key={`video-url-${url}`} url={url} label={t('video.referenceVideos')} removeLabel={t('video.removeUrl', { type: t('video.referenceVideos') })} onRemove={() => setReferenceVideoUrls(current => current.filter(item => item !== url))} />)}
+                  {referenceAudioUrls.map(url => <VideoReferenceUrlTile key={`audio-url-${url}`} url={url} label={t('video.referenceAudios')} removeLabel={t('video.removeUrl', { type: t('video.referenceAudios') })} onRemove={() => setReferenceAudioUrls(current => current.filter(item => item !== url))} />)}
+                </div>
+              )}
+              {videoProtocolAcceptsUrls(protocolProfile) && (
+                <div className="mx-3 mb-2 space-y-2 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 sm:mx-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-primary">{t('video.referenceUrls')}</span>
+                    {videoProtocolRequiresUrls(protocolProfile) && <span className="text-[11px] text-muted-foreground">{t('video.urlOnlyReferenceError')}</span>}
+                  </div>
+                  <div className="grid min-w-0 gap-2 lg:grid-cols-3">
+                    <VideoReferenceUrlInput label={t('video.referenceImages')} value={referenceUrlDrafts.images} placeholder={t('video.referenceUrlPlaceholder')} addLabel={t('video.addUrl')} disabled={referenceImageUrls.length + referenceImages.length >= maxReferenceImages} onChange={value => setReferenceUrlDrafts(current => ({ ...current, images: value }))} onAdd={() => addReferenceUrl('images')} />
+                    <VideoReferenceUrlInput label={t('video.referenceVideos')} value={referenceUrlDrafts.videos} placeholder={t('video.referenceUrlPlaceholder')} addLabel={t('video.addUrl')} disabled={referenceVideoUrls.length + referenceVideos.length >= maxReferenceVideos} onChange={value => setReferenceUrlDrafts(current => ({ ...current, videos: value }))} onAdd={() => addReferenceUrl('videos')} />
+                    <VideoReferenceUrlInput label={t('video.referenceAudios')} value={referenceUrlDrafts.audios} placeholder={t('video.referenceUrlPlaceholder')} addLabel={t('video.addUrl')} disabled={referenceAudioUrls.length + referenceAudios.length >= maxReferenceAudios} onChange={value => setReferenceUrlDrafts(current => ({ ...current, audios: value }))} onAdd={() => addReferenceUrl('audios')} />
+                  </div>
                 </div>
               )}
               <div className="mx-3 mt-1 overflow-hidden rounded-xl border-2 border-primary/35 bg-background/70 shadow-sm transition-colors focus-within:border-primary focus-within:ring-3 focus-within:ring-primary/15 sm:mx-4">

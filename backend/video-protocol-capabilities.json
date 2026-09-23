@@ -13,7 +13,7 @@
         "aspectRatio": { "visible": true, "values": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "21:9"] },
         "resolution": { "visible": true, "values": [480, 720, 1080, 2160], "allowCustom": true }
       },
-      "references": { "images": 9, "videos": 3, "audios": 3, "imageMimeTypes": ["image/*"], "videoMimeTypes": ["video/*"], "audioMimeTypes": ["audio/*"], "imageSizeMustMatchOutput": false },
+      "references": { "inputMode": "url-only", "acceptsUrls": true, "images": 9, "videos": 3, "audios": 3, "imageMimeTypes": ["image/*"], "videoMimeTypes": ["video/*"], "audioMimeTypes": ["audio/*"], "imageSizeMustMatchOutput": false },
       "modelProfiles": []
     },
     "openai": {
@@ -28,7 +28,7 @@
         "aspectRatio": { "visible": true, "values": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "21:9"] },
         "resolution": { "visible": true, "values": [480, 720, 1080, 2160], "allowCustom": true }
       },
-      "references": { "images": 9, "videos": 3, "audios": 3, "imageMimeTypes": ["image/jpeg", "image/png", "image/webp"], "videoMimeTypes": ["video/*"], "audioMimeTypes": ["audio/*"], "imageSizeMustMatchOutput": false },
+      "references": { "inputMode": "multipart", "acceptsUrls": false, "images": 9, "videos": 3, "audios": 3, "imageMimeTypes": ["image/jpeg", "image/png", "image/webp"], "videoMimeTypes": ["video/*"], "audioMimeTypes": ["audio/*"], "imageSizeMustMatchOutput": false },
       "modelProfiles": [
         {
           "modelPrefix": "sora-2-pro",
@@ -53,7 +53,7 @@
         "aspectRatio": { "visible": true, "values": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"] },
         "resolution": { "visible": true, "values": [480, 720], "allowCustom": false }
       },
-      "references": { "images": 1, "videos": 0, "audios": 0, "imageMimeTypes": ["image/*"], "videoMimeTypes": ["video/*"], "audioMimeTypes": ["audio/*"], "imageSizeMustMatchOutput": false },
+      "references": { "inputMode": "multipart", "acceptsUrls": false, "images": 1, "videos": 0, "audios": 0, "imageMimeTypes": ["image/*"], "videoMimeTypes": ["video/*"], "audioMimeTypes": ["audio/*"], "imageSizeMustMatchOutput": false },
       "modelProfiles": [
         {
           "modelPrefix": "grok-imagine-video-1.5",

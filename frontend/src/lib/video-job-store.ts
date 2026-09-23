@@ -20,6 +20,12 @@ export interface VideoReferenceMetadataGroup {
   audios: VideoReferenceMetadata[];
 }
 
+export interface VideoReferenceUrlMetadataGroup {
+  images: string[];
+  videos: string[];
+  audios: string[];
+}
+
 export interface StoredVideoJob {
   id: string;
   serverTaskId?: string;
@@ -44,6 +50,7 @@ export interface StoredVideoJob {
   referenceVideos: VideoReferenceMetadata[];
   referenceAudios: VideoReferenceMetadata[];
   referenceImages: VideoReferenceMetadata[];
+  referenceUrls?: VideoReferenceUrlMetadataGroup;
   /** 当前任务关联的参考素材二进制存储标识；同一批量任务共享一份素材。 */
   referenceStorageId?: string;
   createdAt: string;

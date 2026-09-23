@@ -22,6 +22,9 @@ export interface CreateVideoTaskInput {
   referenceImages: File[];
   referenceVideos: File[];
   referenceAudios: File[];
+  referenceImageUrls: string[];
+  referenceVideoUrls: string[];
+  referenceAudioUrls: string[];
   promptVariants?: string[];
 }
 
@@ -48,6 +51,9 @@ function buildVideoTaskFormData(input: CreateVideoTaskInput, parallelCount: numb
   input.referenceImages.forEach(file => formData.append('reference_images', file, file.name));
   input.referenceVideos.forEach(file => formData.append('reference_videos', file, file.name));
   input.referenceAudios.forEach(file => formData.append('reference_audios', file, file.name));
+  input.referenceImageUrls.forEach(url => formData.append('reference_image_urls', url));
+  input.referenceVideoUrls.forEach(url => formData.append('reference_video_urls', url));
+  input.referenceAudioUrls.forEach(url => formData.append('reference_audio_urls', url));
   return formData;
 }
 

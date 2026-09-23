@@ -110,6 +110,69 @@ describe('VideoGenerationWorkspace', () => {
     expect(screen.getAllByText('Imported Seedance').length).toBeGreaterThan(0);
   });
 
+  it('为 New API 协议提交三类 URL 参考素材且拒绝本地文件', async () => {
+    const registry = loadRegistry();
+    registry.videoModels = [{
+      id: 'video-new-api-url',
+      protocol: 'new-api',
+      name: 'New API URL Video',
+      modelId: 'doubao-seedance-2-5-260628',
+      apiKey: 'test-key',
+      baseUrl: 'http://127.0.0.1:3000',
+    }];
+    registry.defaults.videoGeneration = 'video-new-api-url';
+    saveRegistry(registry);
+    const showToast = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'video-url-task', status: 'queued', createdAt: '2026-09-23T09:00:00.000Z' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <LanguageProvider initialLocale="en">
+        <VideoGenerationWorkspace onConfigureApiKey={vi.fn()} showToast={showToast} />
+      </LanguageProvider>,
+    );
+
+    const urlInputs = screen.getAllByPlaceholderText('Paste an image, video, or audio URL');
+    const addUrlButtons = screen.getAllByRole('button', { name: 'Add URL' });
+    expect(urlInputs).toHaveLength(3);
+    expect(addUrlButtons).toHaveLength(3);
+
+    fireEvent.change(urlInputs[0], { target: { value: 'data:image/png;base64,not-allowed' } });
+    fireEvent.click(addUrlButtons[0]);
+    expect(showToast).toHaveBeenCalledWith('Only valid HTTP(S) URLs can be added.', 'error');
+
+    const urls = [
+      'https://ark-project.tos-cn-beijing.volces.com/doc_image/r2v_tea_pic1.jpg',
+      'https://ark-project.tos-cn-beijing.volces.com/doc_video/r2v_tea_video1.mp4',
+      'https://ark-project.tos-cn-beijing.volces.com/doc_audio/r2v_tea_audio1.mp3',
+    ];
+    urls.forEach((url, index) => {
+      fireEvent.change(urlInputs[index], { target: { value: url } });
+      fireEvent.click(addUrlButtons[index]);
+    });
+    expect(screen.getByText(urls[0])).toBeInTheDocument();
+    expect(screen.getByText(urls[1])).toBeInTheDocument();
+    expect(screen.getByText(urls[2])).toBeInTheDocument();
+
+    const imageInput = document.getElementById('image-reference-input') as HTMLInputElement;
+    fireEvent.change(imageInput, { target: { files: [new File(['image'], 'local.png', { type: 'image/png' })] } });
+    expect(showToast).toHaveBeenCalledWith('This video protocol accepts reference media by HTTP(S) URL only.', 'error');
+
+    fireEvent.change(screen.getByPlaceholderText('Describe the scene, motion, camera, pacing, and sound you want…'), { target: { value: 'URL references only' } });
+    fireEvent.click(screen.getByTitle('Generate video'));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    const formData = fetchMock.mock.calls[0][1].body as FormData;
+    expect(formData.getAll('reference_image_urls')).toEqual([urls[0]]);
+    expect(formData.getAll('reference_video_urls')).toEqual([urls[1]]);
+    expect(formData.getAll('reference_audio_urls')).toEqual([urls[2]]);
+    expect(formData.getAll('reference_images')).toHaveLength(0);
+    expect(formData.getAll('reference_videos')).toHaveLength(0);
+    expect(formData.getAll('reference_audios')).toHaveLength(0);
+  });
+
   it('refreshes the selected channel model catalog and reports the result', async () => {
     const showToast = vi.fn();
     const fetchMock = vi.fn().mockResolvedValue({
@@ -332,9 +395,9 @@ describe('VideoGenerationWorkspace', () => {
     const registry = loadRegistry();
     registry.videoModels = [{
       id: 'video-new-api',
-      protocol: 'new-api',
+      protocol: 'xai',
       name: 'New API Video',
-      modelId: 'video-model',
+      modelId: 'grok-imagine-video',
       apiKey: 'test-key',
       baseUrl: 'https://video.example.com',
     }];

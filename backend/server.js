@@ -12,7 +12,7 @@ const { pipeline } = require('stream/promises');
 const { createXaiImagineRequestInit, getXaiImagineEndpoint } = require('./xai-imagine');
 const { flushDailyFileLogs, installDailyFileLogger, isDailyFileLogEnabled } = require('./daily-file-logger');
 const { createVideoRequest, formatVideoResolution, getCreatedVideoTaskId, getVideoDownloadHeaders, getVideoPollPath, normalizeVideoPollResult } = require('./video-protocols');
-const { isPublicVideoProtocol, isVideoProtocol, resolveVideoProtocolConfig, validateVideoProtocolReferences, validateVideoProtocolRequest } = require('./video-protocol-config');
+const { isPublicVideoProtocol, isVideoProtocol, normalizeVideoReferenceUrls, resolveVideoProtocolConfig, validateVideoProtocolReferences, validateVideoProtocolRequest } = require('./video-protocol-config');
 const {
   getVideoUpstreamLogMaxChars,
   isVideoUpstreamLogEnabled,
@@ -1503,7 +1503,14 @@ function readVideoMultipartBody(req) {
         fileSize: Math.max(config.maxReferenceVideoBytes, config.maxReferenceAudioBytes, config.maxReferenceImageBytes),
       },
     });
-    busboy.on('field', (name, value) => { fields[name] = value; });
+    busboy.on('field', (name, value) => {
+      if (['reference_image_urls', 'reference_video_urls', 'reference_audio_urls'].includes(name)) {
+        if (!Array.isArray(fields[name])) fields[name] = [];
+        fields[name].push(value);
+        return;
+      }
+      fields[name] = value;
+    });
     busboy.on('file', (name, stream, info) => {
       const target = name === 'reference_videos' ? files.videos : name === 'reference_audios' ? files.audios : name === 'reference_images' ? files.images : null;
       const expectedPrefix = name === 'reference_videos' ? 'video/' : name === 'reference_audios' ? 'audio/' : 'image/';
@@ -1588,6 +1595,11 @@ function composeEffectiveVideoPrompt(prompt, promptVariant) {
  */
 async function normalizeVideoTaskPayload(fields, files) {
   const config = resolveVideoWorkspaceConfig();
+  const referenceUrls = {
+    images: normalizeVideoReferenceUrls(fields.reference_image_urls, '图片'),
+    videos: normalizeVideoReferenceUrls(fields.reference_video_urls, '视频'),
+    audios: normalizeVideoReferenceUrls(fields.reference_audio_urls, '音频'),
+  };
   const resolution = Number(fields.resolution);
   const seconds = Number(fields.seconds);
   const size = String(fields.size || '').trim().toLowerCase();
@@ -1610,7 +1622,7 @@ async function normalizeVideoTaskPayload(fields, files) {
     const height = Number(match?.[2]);
     if (!match || [width, height].some(side => !Number.isInteger(side) || side < 64 || side > 4096)) throw new Error('视频尺寸无效');
   }
-  if (files.videos.length > config.maxRefVideos || files.audios.length > config.maxRefAudios || files.images.length > config.maxRefImages) throw new Error('参考附件数量超过限制');
+  if (files.videos.length + referenceUrls.videos.length > config.maxRefVideos || files.audios.length + referenceUrls.audios.length > config.maxRefAudios || files.images.length + referenceUrls.images.length > config.maxRefImages) throw new Error('参考附件数量超过限制');
   const payload = {
     mode: 'video-generation',
     source: 'flyreq',
@@ -1626,10 +1638,20 @@ async function normalizeVideoTaskPayload(fields, files) {
     seconds,
     parallelCount,
     promptVariants,
+    referenceUrls,
     references: {
-      videos: files.videos.map(file => ({ name: file.filename, mimeType: file.mimeType, size: file.size })),
-      audios: files.audios.map(file => ({ name: file.filename, mimeType: file.mimeType, size: file.size })),
-      images: files.images.map(file => ({ name: file.filename, mimeType: file.mimeType, size: file.size })),
+      videos: [
+        ...files.videos.map(file => ({ name: file.filename, mimeType: file.mimeType, size: file.size })),
+        ...referenceUrls.videos.map(url => ({ url })),
+      ],
+      audios: [
+        ...files.audios.map(file => ({ name: file.filename, mimeType: file.mimeType, size: file.size })),
+        ...referenceUrls.audios.map(url => ({ url })),
+      ],
+      images: [
+        ...files.images.map(file => ({ name: file.filename, mimeType: file.mimeType, size: file.size })),
+        ...referenceUrls.images.map(url => ({ url })),
+      ],
     },
   };
   const profile = validateVideoProtocolRequest(resolveVideoProtocolConfig(getRuntimeEnv()), protocol, payload.model, payload, files);
@@ -2561,7 +2583,7 @@ function getMaxVideoConcurrency() {
  */
 function registerVideoTaskRuntimeState(taskId, payload, files, source) {
   apiKeys.set(taskId, payload.apiKey);
-  taskVideoFiles.set(taskId, files);
+  taskVideoFiles.set(taskId, { ...files, referenceUrls: payload.referenceUrls || { images: [], videos: [], audios: [] } });
   videoTaskAbortControllers.set(taskId, new AbortController());
   taskSources.set(taskId, source);
   if (source.ip) pendingCountByIp.set(source.ip, (pendingCountByIp.get(source.ip) || 0) + 1);
@@ -2790,7 +2812,7 @@ async function cacheVideoResult(taskId, remoteUrl, apiKey, authenticatedOrigin, 
 async function runVideoTask(taskId) {
   const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(taskId);
   const apiKey = apiKeys.get(taskId);
-  const files = taskVideoFiles.get(taskId) || { videos: [], audios: [], images: [] };
+  const runtimeFiles = taskVideoFiles.get(taskId) || { videos: [], audios: [], images: [] };
   const abortController = videoTaskAbortControllers.get(taskId);
   if (!task || !apiKey || !abortController || ![TASK_STATUS.QUEUED, TASK_STATUS.LEGACY_QUEUED].includes(task.status)) {
     cleanupTaskRuntimeState(taskId);
@@ -2807,6 +2829,10 @@ async function runVideoTask(taskId) {
     broadcastQueueStatus();
     return;
   }
+  const files = {
+    ...runtimeFiles,
+    referenceUrls: runtimeFiles.referenceUrls || request.referenceUrls || { images: [], videos: [], audios: [] },
+  };
   const startedAtMs = Number.isFinite(Date.parse(task.created_at)) ? Date.parse(task.created_at) : Date.now();
   const trace = {
     taskId,
