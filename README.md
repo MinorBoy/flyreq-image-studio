@@ -87,14 +87,14 @@ FlyReq Image Studio（简称 FlyReq Image）是一个面向个人与团队的 AI
 <table>
   <tr>
     <td width="180" align="center">
-      <a href="https://flyreq.com">
+      <a href="https://lynwu.com">
         <img src="frontend/public/icon-512.png" width="112" alt="FlyReq" />
       </a>
     </td>
     <td>
-      <strong>感谢 <a href="https://flyreq.com">FlyReq</a> 对本项目的赞助支持！</strong><br /><br />
+      <strong>感谢 <a href="https://lynwu.com">FlyReq</a> 对本项目的赞助支持！</strong><br /><br />
       FlyReq 是一家提供高折扣 AI 模型 API 中转服务的平台，帮助个人开发者和团队以更具成本优势的方式接入所需模型服务。<br /><br />
-      新用户注册即可获得体验额度，用于验证模型能力和接入流程。访问 <a href="https://flyreq.com">flyreq.com</a> 了解服务详情并开始体验。
+      新用户注册即可获得体验额度，用于验证模型能力和接入流程。访问 <a href="https://lynwu.com">lynwu.com</a> 了解服务详情并开始体验。
     </td>
   </tr>
 </table>
@@ -237,19 +237,19 @@ sudo docker compose restart
 
 队列、限流、提示词广场等运行时配置会被后端定期读取，保存 `.env` 后通常无需重启即可生效。
 
-如果用户模型中填写的是公开 Base URL，但希望服务端实际请求走 Docker 内网地址，可以配置 `FLYREQ_BASE_URL_REWRITE_MAP`。例如用户仍填写 `https://flyreq.com`，后端实际请求同一 1Panel 网络里的 new-api 容器：
+如果用户模型中填写的是公开 Base URL，但希望服务端实际请求走 Docker 内网地址，可以配置 `FLYREQ_BASE_URL_REWRITE_MAP`。例如用户仍填写 `https://lynwu.com`，后端实际请求同一 1Panel 网络里的 new-api 容器：
 
 ```env
-FLYREQ_BASE_URL_REWRITE_MAP={"https://flyreq.com":"http://new-api:3000"}
+FLYREQ_BASE_URL_REWRITE_MAP={"https://lynwu.com":"http://new-api:3000"}
 ```
 
 支持多个映射：
 
 ```env
-FLYREQ_BASE_URL_REWRITE_MAP={"https://flyreq.com":"http://new-api:3000","https://api.example.com":"http://example-new-api:3000"}
+FLYREQ_BASE_URL_REWRITE_MAP={"https://lynwu.com":"http://new-api:3000","https://api.example.com":"http://example-new-api:3000"}
 ```
 
-匹配会自动忽略末尾 `/v1` 或 `/v1beta`：用户填 `https://flyreq.com/v1` 也会命中 `https://flyreq.com`。映射只影响后端出站请求，不会改写用户保存的模型配置。
+匹配会自动忽略末尾 `/v1` 或 `/v1beta`：用户填 `https://lynwu.com/v1` 也会命中 `https://lynwu.com`。映射只影响后端出站请求，不会改写用户保存的模型配置。
 
 ### 升级
 
@@ -473,7 +473,7 @@ URL 只需要一个 `provider` 参数，内容是 JSON 字符串。下面使用�
   "modelKey": "flyreq-gpt-image-2",
   "name": "FlyReq",
   "modelId": "gpt-image-2",
-  "baseUrl": "https://flyreq.com",
+  "baseUrl": "https://lynwu.com",
   "apiKey": "YOUR_API_KEY",
   "maxRefImages": 16,
   "maxOutputSize": "4K",
@@ -484,11 +484,11 @@ URL 只需要一个 `provider` 参数，内容是 JSON 字符串。下面使用�
 
 URL编码JSON:
 ```text
-https://image.flyreq.com/zh/?provider=%7B%22type%22%3A%22image%22%2C%22preset%22%3A%22gpt-image-2%22%2C%22provider%22%3A%22openai%22%2C%22modelKey%22%3A%22flyreq-gpt-image-2%22%2C%22name%22%3A%22FlyReq%22%2C%22modelId%22%3A%22gpt-image-2%22%2C%22baseUrl%22%3A%22https%3A%2F%2Fflyreq.com%22%2C%22apiKey%22%3A%22YOUR_API_KEY%22%2C%22maxRefImages%22%3A16%2C%22maxOutputSize%22%3A%224K%22%7D
+https://image.lynwu.com/zh/?provider=%7B%22type%22%3A%22image%22%2C%22preset%22%3A%22gpt-image-2%22%2C%22provider%22%3A%22openai%22%2C%22modelKey%22%3A%22flyreq-gpt-image-2%22%2C%22name%22%3A%22FlyReq%22%2C%22modelId%22%3A%22gpt-image-2%22%2C%22baseUrl%22%3A%22https%3A%2F%2Flynwu.com%22%2C%22apiKey%22%3A%22YOUR_API_KEY%22%2C%22maxRefImages%22%3A16%2C%22maxOutputSize%22%3A%224K%22%7D
 ```
 
 ```text
-https://image.flyreq.com/zh/?provider={"type":"image","preset":"gpt-image-2","provider":"openai","modelKey":"flyreq-gpt-image-2","name":"FlyReq","modelId":"gpt-image-2","baseUrl":"https://flyreq.com","apiKey":"YOUR_API_KEY","maxRefImages":16,"maxOutputSize":"4K"}
+https://image.lynwu.com/zh/?provider={"type":"image","preset":"gpt-image-2","provider":"openai","modelKey":"flyreq-gpt-image-2","name":"FlyReq","modelId":"gpt-image-2","baseUrl":"https://lynwu.com","apiKey":"YOUR_API_KEY","maxRefImages":16,"maxOutputSize":"4K"}
 ```
 
 配置完整时，图片模型会成为文生图和图生图默认模型。
@@ -502,14 +502,14 @@ https://image.flyreq.com/zh/?provider={"type":"image","preset":"gpt-image-2","pr
   "modelKey": "flyreq-text-default",
   "name": "FlyReq Text",
   "modelId": "gpt-5.4-mini",
-  "baseUrl": "https://flyreq.com",
+  "baseUrl": "https://lynwu.com",
   "apiKey": "YOUR_API_KEY",
   "note": "OpenAI Responses 兼容文本模型"
 }
 ```
 
 ```text
-https://image.flyreq.com/zh/?provider={"type":"text","provider":"openai","modelKey":"flyreq-text-default","name":"FlyReq Text","modelId":"gpt-5.4-mini","baseUrl":"https://flyreq.com","apiKey":"YOUR_API_KEY","note":"OpenAI Responses 兼容文本模型"}
+https://image.lynwu.com/zh/?provider={"type":"text","provider":"openai","modelKey":"flyreq-text-default","name":"FlyReq Text","modelId":"gpt-5.4-mini","baseUrl":"https://lynwu.com","apiKey":"YOUR_API_KEY","note":"OpenAI Responses 兼容文本模型"}
 ```
 
 配置完整时，文本模型会成为 Agent、反推提示词、提示词优化和图片描述的初始默认模型；用户保存前可以分别调整。文本模型支持 `openai` 和 `google`。
@@ -529,7 +529,7 @@ https://image.flyreq.com/zh/?provider={"type":"text","provider":"openai","modelK
 ```
 
 ```text
-https://image.flyreq.com/zh/?provider={"type":"video","protocol":"openai","modelKey":"flyreq-video-default","name":"FlyReq Video","modelId":"sora-2","baseUrl":"https://api.openai.com","apiKey":"YOUR_API_KEY"}
+https://image.lynwu.com/zh/?provider={"type":"video","protocol":"openai","modelKey":"flyreq-video-default","name":"FlyReq Video","modelId":"sora-2","baseUrl":"https://api.openai.com","apiKey":"YOUR_API_KEY"}
 ```
 
 
@@ -597,7 +597,7 @@ https://image.flyreq.com/zh/?provider={"type":"video","protocol":"openai","model
 | `FLYREQ_RATE_LIMIT_RETRY_AFTER_SECONDS` | 否 | `30` | 队列满/限流时响应头 `Retry-After` 秒数 |
 | `FLYREQ_IMAGE_DIR` | 否 | `backend/flyreq-images/` | 任务产物落盘目录 |
 | `FLYREQ_REMOTE_IMAGE_MAX_BYTES` | 否 | `52428800` | 服务端下载远程生成图片的最大字节数，范围为 1024 至 209715200 |
-| `FLYREQ_BASE_URL_REWRITE_MAP` | 否 | 空 | Base URL 出站改写表；例如 `{"https://flyreq.com":"http://new-api:3000"}` |
+| `FLYREQ_BASE_URL_REWRITE_MAP` | 否 | 空 | Base URL 出站改写表；例如 `{"https://lynwu.com":"http://new-api:3000"}` |
 | `FLYREQ_OUTBOUND_USER_AGENT` | 否 | `FlyReq-Image-Studio/1.5.1` | 上游请求携带的稳定服务标识；请配置为部署方可追溯的产品名称，不要伪造浏览器或第三方服务身份 |
 | `FLYREQ_FILE_LOG_ENABLED` | 否 | `true` | 是否将全部后端标准日志按日期写入文件；`false`、`0`、`no`、`off` 关闭 |
 | `FLYREQ_LOG_DIR` | 否 | `backend/logs/application` | 按日期分割的后端应用 JSONL 日志目录；Docker Compose 使用 `/app/backend/logs/application` |
@@ -609,15 +609,15 @@ https://image.flyreq.com/zh/?provider={"type":"video","protocol":"openai","model
 | `FLYREQ_PWA_MASKABLE_ICON_512_URL` | 否 | `/icon-maskable-512.png` | PWA Maskable 图标；必须为 `512x512` PNG，重要内容放在中心 80% 安全区域 |
 | `FLYREQ_IMAGE_MODEL_KEY_GUIDE_TITLE` | 否 | `还没有图片模型 API Key？` | 设置页图片模型 Key 指引标题 |
 | `FLYREQ_IMAGE_MODEL_KEY_GUIDE_DESCRIPTION` | 否 | FlyReq 默认说明 | 设置页图片模型 Key 指引描述 |
-| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_CTA_LABEL` | 否 | `前往 flyreq.com` | 设置页图片模型 Key 指引按钮文字 |
-| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_URL` | 否 | `https://flyreq.com` | 设置页图片模型 Key 指引跳转地址 |
+| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_CTA_LABEL` | 否 | `前往 lynwu.com` | 设置页图片模型 Key 指引按钮文字 |
+| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_URL` | 否 | `https://lynwu.com` | 设置页图片模型 Key 指引跳转地址 |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_KEY` | 否 | `flyreq-gpt-image-2` | 首次默认图片模型的稳定内部 Key |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_NAME` | 否 | `FlyReq` | 首次默认图片模型的显示名称 |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_PROTOCOL` | 否 | `openai` | 首次默认图片模型协议：`openai` 或 `google` |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_KEY` | 否 | `flyreq-sora-2` | 首次默认视频模型的稳定内部 Key |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_NAME` | 否 | `FlyReq` | 首次默认视频模型的显示名称 |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_PROTOCOL` | 否 | `openai` | 首次默认视频模型协议：`new-api`、`openai` 或 `xai` |
-| `FLYREQ_DEFAULT_VIDEO_MODEL_BASE_URL` | 否 | `https://flyreq.com` | 首次默认视频模型的 Base URL |
+| `FLYREQ_DEFAULT_VIDEO_MODEL_BASE_URL` | 否 | `https://lynwu.com` | 首次默认视频模型的 Base URL |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_MODEL_ID` | 否 | `sora-2` | 首次默认视频模型的上游模型 ID |
 | `FLYREQ_VIDEO_PROTOCOL_CONFIG_OVERRIDES` | 否 | 空 | 视频协议能力的 JSON Merge Patch 覆盖；对象递归合并，数组整体替换，`null` 删除字段 |
 | `FLYREQ_VIDEO_UPSTREAM_LOG_ENABLED` | 否 | `true` | 是否记录视频上游创建、轮询和下载阶段的每次请求与响应；`false`、`0`、`no`、`off` 关闭 |
@@ -626,7 +626,7 @@ https://image.flyreq.com/zh/?provider={"type":"video","protocol":"openai","model
 | `FLYREQ_IMAGE_UPSTREAM_LOG_ENABLED` | 否 | `true` | 是否记录图片上游生成阶段的每次请求与响应；`false`、`0`、`no`、`off` 关闭 |
 | `FLYREQ_IMAGE_UPSTREAM_LOG_MAX_CHARS` | 否 | `65536` | 单条图片上游响应正文的最大字符数，范围 `1024-1048576` |
 | `FLYREQ_IMAGE_UPSTREAM_LOG_DIR` | 否 | `backend/logs/image-upstream` | 按日期分割的图片上游 JSONL 日志目录；Docker Compose 使用 `/app/backend/logs/image-upstream` |
-| `FLYREQ_DEFAULT_IMAGE_MODEL_BASE_URL` | 否 | `https://flyreq.com` | 首次默认图片模型的 Base URL |
+| `FLYREQ_DEFAULT_IMAGE_MODEL_BASE_URL` | 否 | `https://lynwu.com` | 首次默认图片模型的 Base URL |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_MODEL_ID` | 否 | 空 | 实际模型 ID；留空时使用预设模型 ID 映射 |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_PRESET` | 否 | `gpt-image-2` | 内置图片预设 ID，决定模型能力边界 |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_MAX_REF_IMAGES` | 否 | `16` | 最大参考图数量，范围 `1-16` |

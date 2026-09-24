@@ -106,7 +106,7 @@ describe('settings-storage model availability', () => {
       modelId: '',
       usesPresetModelId: true,
       apiKey: '',
-      baseUrl: 'https://flyreq.com',
+      baseUrl: 'https://lynwu.com',
       builtinPreset: 'gpt-image-2',
       maxRefImages: 16,
       maxOutputSize: '4K',

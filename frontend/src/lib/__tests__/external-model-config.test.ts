@@ -17,7 +17,7 @@ describe('external model config URL parser', () => {
       modelKey: 'flyreq-gpt-image-2',
       name: 'FlyReq',
       modelId: 'gpt-image-2',
-      baseUrl: 'https://flyreq.com',
+      baseUrl: 'https://lynwu.com',
       apiKey: 'json-key',
       maxRefImages: 16,
       maxOutputSize: '4K',
@@ -31,7 +31,7 @@ describe('external model config URL parser', () => {
       modelKey: 'flyreq-gpt-image-2',
       name: 'FlyReq',
       modelId: 'gpt-image-2',
-      baseUrl: 'https://flyreq.com',
+      baseUrl: 'https://lynwu.com',
       apiKey: 'json-key',
       maxRefImages: 16,
       maxOutputSize: '4K',
@@ -39,7 +39,7 @@ describe('external model config URL parser', () => {
   });
 
   it('also accepts raw JSON in the provider parameter', () => {
-    const url = new URL('https://example.com/zh/?provider={"type":"image","preset":"gpt-image-2","provider":"openai","name":"FlyReq","modelId":"gpt-image-2","baseUrl":"https://flyreq.com","apiKey":"raw-key"}');
+    const url = new URL('https://example.com/zh/?provider={"type":"image","preset":"gpt-image-2","provider":"openai","name":"FlyReq","modelId":"gpt-image-2","baseUrl":"https://lynwu.com","apiKey":"raw-key"}');
 
     expect(parseExternalModelConfig(url)).toMatchObject({
       type: 'image',
@@ -47,7 +47,7 @@ describe('external model config URL parser', () => {
       protocol: 'openai',
       name: 'FlyReq',
       modelId: 'gpt-image-2',
-      baseUrl: 'https://flyreq.com',
+      baseUrl: 'https://lynwu.com',
       apiKey: 'raw-key',
     });
   });
@@ -111,7 +111,7 @@ describe('external model config URL parser', () => {
   });
 
   it('keeps legacy multi-param URLs parseable', () => {
-    const url = new URL('https://example.com/zh/?configureModel=1&type=image&preset=gpt-image-2&protocol=openai&name=FlyReq&modelId=gpt-image-2&baseUrl=https%3A%2F%2Fflyreq.com&apiKey=query-key&maxRefImages=16&maxOutputSize=4K');
+    const url = new URL('https://example.com/zh/?configureModel=1&type=image&preset=gpt-image-2&protocol=openai&name=FlyReq&modelId=gpt-image-2&baseUrl=https%3A%2F%2Flynwu.com&apiKey=query-key&maxRefImages=16&maxOutputSize=4K');
 
     expect(parseExternalModelConfig(url)).toMatchObject({
       type: 'image',
@@ -129,7 +129,7 @@ describe('external model config URL parser', () => {
       name: 'FlyReq',
       modelId: 'gpt-image-2',
       apiKey: '',
-      baseUrl: 'https://flyreq.com/',
+      baseUrl: 'https://lynwu.com/',
       builtinPreset: 'gpt-image-2',
       maxRefImages: 16,
       maxOutputSize: '4K',
@@ -140,7 +140,7 @@ describe('external model config URL parser', () => {
       type: 'image',
       name: 'FlyReq',
       modelId: 'gpt-image-2',
-      baseUrl: 'https://flyreq.com',
+      baseUrl: 'https://lynwu.com',
     })?.id).toBe('flyreq-gpt-image-2');
   });
 

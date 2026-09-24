@@ -86,14 +86,14 @@ Built from [tianjiangqiji/nova-image-studio](https://github.com/tianjiangqiji/no
 <table>
   <tr>
     <td width="180" align="center">
-      <a href="https://flyreq.com">
+      <a href="https://lynwu.com">
         <img src="frontend/public/icon-512.png" width="112" alt="FlyReq" />
       </a>
     </td>
     <td>
-      <strong>Thanks to <a href="https://flyreq.com">FlyReq</a> for sponsoring this project.</strong><br /><br />
+      <strong>Thanks to <a href="https://lynwu.com">FlyReq</a> for sponsoring this project.</strong><br /><br />
       FlyReq is an AI model API relay platform focused on high-discount access for developers and teams looking for a cost-effective way to connect the models they need.<br /><br />
-      New registrations receive trial credit for validating model capabilities and integration flows. Visit <a href="https://flyreq.com">flyreq.com</a> to learn more and get started.
+      New registrations receive trial credit for validating model capabilities and integration flows. Visit <a href="https://lynwu.com">lynwu.com</a> to learn more and get started.
     </td>
   </tr>
 </table>
@@ -227,13 +227,13 @@ Queue, rate-limit, and Prompt Gallery settings are refreshed by the backend and 
 Use `FLYREQ_BASE_URL_REWRITE_MAP` when users configure a public base URL but server-side requests should use a Docker-internal address:
 
 ```env
-FLYREQ_BASE_URL_REWRITE_MAP={"https://flyreq.com":"http://new-api:3000"}
+FLYREQ_BASE_URL_REWRITE_MAP={"https://lynwu.com":"http://new-api:3000"}
 ```
 
 Multiple mappings are supported:
 
 ```env
-FLYREQ_BASE_URL_REWRITE_MAP={"https://flyreq.com":"http://new-api:3000","https://api.example.com":"http://example-new-api:3000"}
+FLYREQ_BASE_URL_REWRITE_MAP={"https://lynwu.com":"http://new-api:3000","https://api.example.com":"http://example-new-api:3000"}
 ```
 
 Matching ignores a trailing `/v1` or `/v1beta`. The mapping changes only outbound server requests and never changes a user's saved model configuration.
@@ -404,7 +404,7 @@ Use URL-encoded JSON in production. The raw links below are readable examples; g
   "modelKey": "flyreq-gpt-image-2",
   "name": "FlyReq",
   "modelId": "gpt-image-2",
-  "baseUrl": "https://flyreq.com",
+  "baseUrl": "https://lynwu.com",
   "apiKey": "YOUR_API_KEY",
   "maxRefImages": 16,
   "maxOutputSize": "4K",
@@ -414,12 +414,12 @@ Use URL-encoded JSON in production. The raw links below are readable examples; g
 ```
 
 ```text
-https://image.flyreq.com/en/?provider={"type":"image","preset":"gpt-image-2","provider":"openai","modelKey":"flyreq-gpt-image-2","name":"FlyReq","modelId":"gpt-image-2","baseUrl":"https://flyreq.com","apiKey":"YOUR_API_KEY","maxRefImages":16,"maxOutputSize":"4K"}
+https://image.lynwu.com/en/?provider={"type":"image","preset":"gpt-image-2","provider":"openai","modelKey":"flyreq-gpt-image-2","name":"FlyReq","modelId":"gpt-image-2","baseUrl":"https://lynwu.com","apiKey":"YOUR_API_KEY","maxRefImages":16,"maxOutputSize":"4K"}
 ```
 
 URL-encoded JSON:
 ```text
-https://image.flyreq.com/zh/?provider=%7B%22type%22%3A%22image%22%2C%22preset%22%3A%22gpt-image-2%22%2C%22provider%22%3A%22openai%22%2C%22modelKey%22%3A%22flyreq-gpt-image-2%22%2C%22name%22%3A%22FlyReq%22%2C%22modelId%22%3A%22gpt-image-2%22%2C%22baseUrl%22%3A%22https%3A%2F%2Fflyreq.com%22%2C%22apiKey%22%3A%22YOUR_API_KEY%22%2C%22maxRefImages%22%3A16%2C%22maxOutputSize%22%3A%224K%22%7D
+https://image.lynwu.com/zh/?provider=%7B%22type%22%3A%22image%22%2C%22preset%22%3A%22gpt-image-2%22%2C%22provider%22%3A%22openai%22%2C%22modelKey%22%3A%22flyreq-gpt-image-2%22%2C%22name%22%3A%22FlyReq%22%2C%22modelId%22%3A%22gpt-image-2%22%2C%22baseUrl%22%3A%22https%3A%2F%2Flynwu.com%22%2C%22apiKey%22%3A%22YOUR_API_KEY%22%2C%22maxRefImages%22%3A16%2C%22maxOutputSize%22%3A%224K%22%7D
 ```
 
 When complete, the imported image model becomes the text-to-image and image-to-image default.
@@ -433,14 +433,14 @@ When complete, the imported image model becomes the text-to-image and image-to-i
   "modelKey": "flyreq-text-default",
   "name": "FlyReq Text",
   "modelId": "gpt-5.4-mini",
-  "baseUrl": "https://flyreq.com",
+  "baseUrl": "https://lynwu.com",
   "apiKey": "YOUR_API_KEY",
   "note": "OpenAI Responses-compatible text model"
 }
 ```
 
 ```text
-https://image.flyreq.com/en/?provider={"type":"text","provider":"openai","modelKey":"flyreq-text-default","name":"FlyReq Text","modelId":"gpt-5.4-mini","baseUrl":"https://flyreq.com","apiKey":"YOUR_API_KEY","note":"OpenAI Responses-compatible text model"}
+https://image.lynwu.com/en/?provider={"type":"text","provider":"openai","modelKey":"flyreq-text-default","name":"FlyReq Text","modelId":"gpt-5.4-mini","baseUrl":"https://lynwu.com","apiKey":"YOUR_API_KEY","note":"OpenAI Responses-compatible text model"}
 ```
 
 When complete, the imported text model becomes the initial default for Agent, reverse prompt, prompt optimization, and image description. Users can change each default before saving. Text models support `openai` and `google`.
@@ -460,7 +460,7 @@ When complete, the imported text model becomes the initial default for Agent, re
 ```
 
 ```text
-https://image.flyreq.com/en/?provider={"type":"video","protocol":"openai","modelKey":"flyreq-video-default","name":"FlyReq Video","modelId":"sora-2","baseUrl":"https://api.openai.com","apiKey":"YOUR_API_KEY"}
+https://image.lynwu.com/en/?provider={"type":"video","protocol":"openai","modelKey":"flyreq-video-default","name":"FlyReq Video","modelId":"sora-2","baseUrl":"https://api.openai.com","apiKey":"YOUR_API_KEY"}
 ```
 
 When complete, the imported video model becomes the video-generation default. Video links accept the `new-api`, `openai`, and `xai` protocols. Use the explicit `protocol` field for new links; the historical `provider=openai` form remains mapped to the legacy video endpoint.
@@ -529,7 +529,7 @@ The API key is briefly present in browser history, proxy logs, chat previews, an
 | `FLYREQ_RATE_LIMIT_RETRY_AFTER_SECONDS` | No | `30` | `Retry-After` seconds for a full queue or rate limit. |
 | `FLYREQ_IMAGE_DIR` | No | `backend/flyreq-images/` | Directory for generated image files. |
 | `FLYREQ_REMOTE_IMAGE_MAX_BYTES` | No | `52428800` | Maximum bytes downloaded for a remote generated image; range 1024 to 209715200. |
-| `FLYREQ_BASE_URL_REWRITE_MAP` | No | Empty | Outbound base-URL rewrite map, for example `{"https://flyreq.com":"http://new-api:3000"}`. |
+| `FLYREQ_BASE_URL_REWRITE_MAP` | No | Empty | Outbound base-URL rewrite map, for example `{"https://lynwu.com":"http://new-api:3000"}`. |
 | `FLYREQ_OUTBOUND_USER_AGENT` | No | `FlyReq-Image-Studio/1.5.1` | Stable identifier sent upstream. Use a deployment-traceable product name; do not impersonate browsers or third-party services. |
 | `FLYREQ_FILE_LOG_ENABLED` | No | `true` | Mirror standard backend logs to date-split files; set `false`, `0`, `no`, or `off` to disable. |
 | `FLYREQ_LOG_DIR` | No | `backend/logs/application` | Directory for date-split backend application JSONL logs; Docker Compose uses `/app/backend/logs/application`. |
@@ -541,12 +541,12 @@ The API key is briefly present in browser history, proxy logs, chat previews, an
 | `FLYREQ_PWA_MASKABLE_ICON_512_URL` | No | `/icon-maskable-512.png` | Maskable PWA icon; must be a `512x512` PNG with important content inside the central 80% safe zone. |
 | `FLYREQ_IMAGE_MODEL_KEY_GUIDE_TITLE` | No | `Need an image model API key?` | Image-model key guide title in Settings. |
 | `FLYREQ_IMAGE_MODEL_KEY_GUIDE_DESCRIPTION` | No | FlyReq default description | Image-model key guide description in Settings. |
-| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_CTA_LABEL` | No | `Visit flyreq.com` | Image-model key guide button label. |
-| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_URL` | No | `https://flyreq.com` | Image-model key guide destination. |
+| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_CTA_LABEL` | No | `Visit lynwu.com` | Image-model key guide button label. |
+| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_URL` | No | `https://lynwu.com` | Image-model key guide destination. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_KEY` | No | `flyreq-gpt-image-2` | Stable internal key for the first default image model. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_NAME` | No | `FlyReq` | Display name of the first default image model. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_PROTOCOL` | No | `openai` | First default image-model protocol: `openai` or `google`. |
-| `FLYREQ_DEFAULT_IMAGE_MODEL_BASE_URL` | No | `https://flyreq.com` | Base URL of the first default image model. |
+| `FLYREQ_DEFAULT_IMAGE_MODEL_BASE_URL` | No | `https://lynwu.com` | Base URL of the first default image model. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_MODEL_ID` | No | Empty | Actual model ID. When blank, the preset model-ID mapping is used. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_PRESET` | No | `gpt-image-2` | Built-in image preset ID, which defines the capability boundary. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_MAX_REF_IMAGES` | No | `16` | Maximum reference images, from 1 to 16. |
@@ -557,7 +557,7 @@ The API key is briefly present in browser history, proxy logs, chat previews, an
 | `FLYREQ_DEFAULT_VIDEO_MODEL_KEY` | No | `flyreq-sora-2` | Stable internal key for the first default video model. |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_NAME` | No | `FlyReq` | Display name of the first default video model. |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_PROTOCOL` | No | `openai` | First default video-model protocol: `new-api`, `openai`, or `xai`. |
-| `FLYREQ_DEFAULT_VIDEO_MODEL_BASE_URL` | No | `https://flyreq.com` | Base URL of the first default video model. |
+| `FLYREQ_DEFAULT_VIDEO_MODEL_BASE_URL` | No | `https://lynwu.com` | Base URL of the first default video model. |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_MODEL_ID` | No | `sora-2` | Upstream model ID of the first default video model. |
 | `FLYREQ_VIDEO_PROTOCOL_CONFIG_OVERRIDES` | No | Empty | JSON Merge Patch for video protocol capabilities; objects merge recursively, arrays replace, and `null` deletes a field. |
 | `FLYREQ_VIDEO_UPSTREAM_LOG_ENABLED` | No | `true` | Logs every video-upstream request and response during creation, polling, and download. Set `false`, `0`, `no`, or `off` to disable it. |
@@ -572,7 +572,7 @@ The API key is briefly present in browser history, proxy logs, chat previews, an
 For example, keep a public URL in browser-side model settings while routing server-side requests to a Docker network service:
 
 ```env
-FLYREQ_BASE_URL_REWRITE_MAP={"https://flyreq.com":"http://new-api:3000"}
+FLYREQ_BASE_URL_REWRITE_MAP={"https://lynwu.com":"http://new-api:3000"}
 ```
 
 This mapping changes only outbound server requests. It never rewrites the user's stored model configuration.

@@ -119,7 +119,7 @@ export const DEFAULT_IMAGE_MODELS: ImageModelConfig[] = [
     modelId: '',
     usesPresetModelId: true,
     apiKey: '',
-    baseUrl: 'https://flyreq.com',
+    baseUrl: 'https://lynwu.com',
     builtinPreset: 'gpt-image-2',
     maxRefImages: 16,
     maxOutputSize: '4K',
@@ -137,7 +137,7 @@ export const DEFAULT_VIDEO_MODELS: VideoModelConfig[] = [{
   usesPresetModelId: true,
   presetModelId: DEFAULT_VIDEO_GENERATION_MODEL_ID,
   apiKey: '',
-  baseUrl: 'https://flyreq.com',
+  baseUrl: 'https://lynwu.com',
 }];
 
 /** 部署级下发的首次图片模型配置不携带 API Key。 */

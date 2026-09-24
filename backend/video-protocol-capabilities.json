@@ -5,7 +5,7 @@
       "label": "New API",
       "hidden": false,
       "constraintSource": "workspace-default",
-      "settings": { "baseUrl": "https://flyreq.com", "presetModelId": "" },
+      "settings": { "baseUrl": "https://lynwu.com", "presetModelId": "" },
       "createEndpoint": { "method": "POST", "path": "/v1/video/generations" },
       "parameters": {
         "duration": { "mode": "range", "min": 1, "max": 60, "presets": [6, 10, 12, 15, 20] },
