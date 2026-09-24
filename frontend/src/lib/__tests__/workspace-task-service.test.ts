@@ -6,7 +6,7 @@ vi.hoisted(() => {
     imageModels: [{
       id: 'flyreq-gpt-image-2',
       protocol: 'openai',
-      name: 'FlyReq',
+      name: 'Lynwu',
       modelId: 'gpt-image-2',
       apiKey: 'test-api-key',
       baseUrl: 'https://api.openai.com',

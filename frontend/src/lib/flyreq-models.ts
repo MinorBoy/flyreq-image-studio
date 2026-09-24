@@ -115,7 +115,7 @@ export const DEFAULT_IMAGE_MODELS: ImageModelConfig[] = [
   {
     id: DEFAULT_FLYREQ_IMAGE_MODEL_ID,
     protocol: 'openai',
-    name: 'FlyReq',
+    name: 'Lynwu',
     modelId: '',
     usesPresetModelId: true,
     apiKey: '',
@@ -132,7 +132,7 @@ export const DEFAULT_IMAGE_MODELS: ImageModelConfig[] = [
 export const DEFAULT_VIDEO_MODELS: VideoModelConfig[] = [{
   id: DEFAULT_FLYREQ_VIDEO_MODEL_ID,
   protocol: 'openai',
-  name: 'FlyReq',
+  name: 'Lynwu',
   modelId: '',
   usesPresetModelId: true,
   presetModelId: DEFAULT_VIDEO_GENERATION_MODEL_ID,

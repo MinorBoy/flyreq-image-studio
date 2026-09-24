@@ -117,7 +117,7 @@ jobs:
             ${{ steps.image.outputs.name }}:${{ steps.version.outputs.version }}
             ${{ steps.image.outputs.name }}:${{ steps.version.outputs.tag }}
           labels: |
-            org.opencontainers.image.title=FlyReq Image Studio
+            org.opencontainers.image.title=Lynwu Image Studio
             org.opencontainers.image.description=Self-hosted AI image generation studio
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.version=${{ steps.version.outputs.version }}
@@ -138,7 +138,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: FlyReq Image Studio ${{ steps.version.outputs.tag }}
+          name: Lynwu Image Studio ${{ steps.version.outputs.tag }}
           target_commitish: master
           generate_release_notes: true
           body: |

@@ -73,7 +73,7 @@ export function GifParametersPanel(props: GifParametersPanelProps) {
         <div className="max-w-md">
           <p className="text-base font-medium text-foreground">需要先配置令牌</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            请先在设置中配置 FlyReq API 密钥，才能使用动图生成功能。
+            请先在设置中配置 Lynwu API 密钥，才能使用动图生成功能。
           </p>
         </div>
         <Button onClick={props.onConfigureApiKey}>配置</Button>

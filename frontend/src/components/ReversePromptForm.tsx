@@ -418,7 +418,7 @@ export function ReversePromptForm({ wideMode = false, disabled = false, onConfig
               <p className="mt-2 text-sm text-muted-foreground">
                 {textModelMissing
                   ? '请先在设置中完成至少一个文本模型配置，才能使用反推提示词功能。'
-                  : '请先在设置中配置 FlyReq API 密钥，配置完成后即可使用反推提示词功能。'}
+                  : '请先在设置中配置 Lynwu API 密钥，配置完成后即可使用反推提示词功能。'}
               </p>
             </div>
             <Button onClick={() => setMissingApiKeyDialogOpen(true)}>配置</Button>

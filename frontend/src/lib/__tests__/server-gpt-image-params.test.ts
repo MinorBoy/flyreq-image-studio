@@ -53,7 +53,7 @@ describe('backend GPT Image advanced params forwarding', () => {
 
   it('records the exact outbound size and includes it in upstream failures', () => {
     expect(serverSource).toContain("logImageRequestUrl('openai', request.model, url, { size: resolvedSize || 'auto' })");
-    expect(serverSource).toContain('FlyReq 实际发送尺寸：${resolvedSize}');
+    expect(serverSource).toContain('Lynwu 实际发送尺寸：${resolvedSize}');
   });
 
   it('forwards the selected aspect ratio to OpenAI-compatible image upstreams', () => {

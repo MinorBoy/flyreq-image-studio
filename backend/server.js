@@ -60,12 +60,12 @@ const LIMIT_ERROR_MESSAGES = {
 };
 const DEFAULT_IMAGE_MODEL_KEY_GUIDE = {
   title: '还没有图片模型 API Key？',
-  description: '默认已为你准备 FlyReq 的 GPT Image 2 图片模型，只需要前往 FlyReq 获取 API Key，填入后保存即可开始生成图片。1元=20张4k图。',
+  description: '默认已为你准备 Lynwu 的 GPT Image 2 图片模型，只需要前往 Lynwu 获取 API Key，填入后保存即可开始生成图片。1元=20张4k图。',
   ctaLabel: '前往 lynwu.com',
   url: 'https://lynwu.com',
 };
 const DEFAULT_PLATFORM_BRANDING = {
-  platformName: 'FlyReq Image',
+  platformName: 'Lynwu Image',
   logoUrl: '/favicon.png',
   iconUrl: '/favicon.png',
   pwaIcon192Url: '/icon-192.png',
@@ -76,7 +76,7 @@ const DEFAULT_PLATFORM_BRANDING = {
 const DEFAULT_IMAGE_MODEL_DEPLOYMENT_CONFIG = {
   id: 'flyreq-gpt-image-2',
   protocol: 'openai',
-  name: 'FlyReq',
+  name: 'Lynwu',
   modelId: '',
   usesPresetModelId: true,
   baseUrl: 'https://lynwu.com',
@@ -90,7 +90,7 @@ const DEFAULT_IMAGE_MODEL_DEPLOYMENT_CONFIG = {
 const DEFAULT_VIDEO_MODEL_DEPLOYMENT_CONFIG = {
   id: 'flyreq-sora-2',
   protocol: 'openai',
-  name: 'FlyReq',
+  name: 'Lynwu',
   modelId: 'sora-2',
   baseUrl: 'https://lynwu.com',
 };
@@ -109,7 +109,7 @@ const BUILTIN_IMAGE_PRESET_IDS = new Set([
   'gemini-2.5-flash-image', 'gemini-3-pro-image-preview', 'gemini-3.1-flash-image-preview',
   'gemini-3.1-flash-lite-image', 'gpt-image-2', 'grok-imagine-image', 'grok-imagine-image-quality',
 ]);
-const DEFAULT_OUTBOUND_USER_AGENT = 'FlyReq-Image-Studio/1.5.1';
+const DEFAULT_OUTBOUND_USER_AGENT = 'Lynwu-Image-Studio/1.5.1';
 
 function parseEnvFile(filePath) {
   if (!fs.existsSync(filePath)) return {};
@@ -2061,7 +2061,7 @@ function getGptImageRequestAdvancedParams(request) {
 
 /**
  * 获取上游私有协议使用的显式图片比例。
- * @param {unknown} value FlyReq 请求中的比例值。
+ * @param {unknown} value Lynwu 请求中的比例值。
  * @returns {string | undefined} 非自动比例；自动比例不发送该扩展字段。
  */
 function getExplicitImageAspectRatio(value) {
@@ -2352,7 +2352,7 @@ async function requestGptImage(apiKey, request, resolvedSize, options = {}) {
     return { image: await parseGptImageResponse(response), usesSse };
   } catch (error) {
     if (resolvedSize && error instanceof Error) {
-      error.message = `${error.message}（FlyReq 实际发送尺寸：${resolvedSize}）`;
+      error.message = `${error.message}（Lynwu 实际发送尺寸：${resolvedSize}）`;
     }
     if (usesSse && error && typeof error === 'object') {
       error.usesSse = true;
@@ -3751,7 +3751,7 @@ if (storageReady) {
  */
 function handleServerListenError(error) {
   if (error.code === 'EADDRINUSE') {
-    console.error(`[server] 启动失败：端口 ${PORT} 已被其他进程占用。请停止旧的 FlyReq Image 实例，或通过 PORT 环境变量改用其他端口。`);
+    console.error(`[server] 启动失败：端口 ${PORT} 已被其他进程占用。请停止旧的 Lynwu Image 实例，或通过 PORT 环境变量改用其他端口。`);
   } else if (error.code === 'EACCES') {
     console.error(`[server] 启动失败：没有权限监听 ${HOSTNAME}:${PORT}，请检查端口权限或改用其他端口。`);
   } else {
@@ -3804,7 +3804,7 @@ const startServer = () => {
   httpServer.listen(PORT, HOSTNAME, () => {
     const localUrl = `http://localhost:${PORT}`;
     const listenUrl = `http://${HOSTNAME}:${PORT}`;
-    console.log(`FlyReq Image server ready on ${localUrl}`);
+    console.log(`Lynwu Image server ready on ${localUrl}`);
     if (HOSTNAME !== 'localhost' && HOSTNAME !== '127.0.0.1') {
       console.log(`Listening on ${listenUrl}`);
     }

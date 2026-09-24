@@ -1,4 +1,4 @@
-# FlyReq Image Studio
+# Lynwu Image Studio
 
 <p align="right"><strong>简体中文</strong> | <a href="./README.en.md">English</a></p>
 
@@ -18,7 +18,7 @@
 
 ## 📖 简介
 
-FlyReq Image Studio（简称 FlyReq Image）是一个面向个人与团队的 AI 图片和视频创作工作台。前端使用 Next.js 16 + React 19 静态导出（PWA），后端是轻量 Node.js 服务（`server.js` + SQLite + WebSocket），统一调度任务并代理图片与视频生成 API。
+Lynwu Image Studio（简称 Lynwu Image）是一个面向个人与团队的 AI 图片和视频创作工作台。前端使用 Next.js 16 + React 19 静态导出（PWA），后端是轻量 Node.js 服务（`server.js` + SQLite + WebSocket），统一调度任务并代理图片与视频生成 API。
 
 **核心亮点：**
 
@@ -88,12 +88,12 @@ FlyReq Image Studio（简称 FlyReq Image）是一个面向个人与团队的 AI
   <tr>
     <td width="180" align="center">
       <a href="https://lynwu.com">
-        <img src="frontend/public/icon-512.png" width="112" alt="FlyReq" />
+        <img src="frontend/public/icon-512.png" width="112" alt="Lynwu" />
       </a>
     </td>
     <td>
-      <strong>感谢 <a href="https://lynwu.com">FlyReq</a> 对本项目的赞助支持！</strong><br /><br />
-      FlyReq 是一家提供高折扣 AI 模型 API 中转服务的平台，帮助个人开发者和团队以更具成本优势的方式接入所需模型服务。<br /><br />
+      <strong>感谢 <a href="https://lynwu.com">FLynwu/a> 对本项目的赞助支持！</strong><br /><br />
+      Lynwu 是一家提供高折扣 AI 模型 API 中转服务的平台，帮助个人开发者和团队以更具成本优势的方式接入所需模型服务。<br /><br />
       新用户注册即可获得体验额度，用于验证模型能力和接入流程。访问 <a href="https://lynwu.com">lynwu.com</a> 了解服务详情并开始体验。
     </td>
   </tr>
@@ -359,7 +359,7 @@ npm run dev
 
 访问 <http://localhost:3001>。
 
-> 首次启动时，图片模型会使用部署者配置的默认模型（未配置时使用 FlyReq / GPT Image 2 预设）；出于安全原因不会下发 API Key。请在 UI 的“设置”中填写图片模型 API Key，并至少配置一个文本模型及其 API Key，再确认各任务的默认模型。所有前端配置均保存在浏览器 localStorage，可通过备份功能导出。
+> 首次启动时，图片模型会使用部署者配置的默认模型（未配置时使用 Lynwu / GPT Image 2 预设）；出于安全原因不会下发 API Key。请在 UI 的“设置”中填写图片模型 API Key，并至少配置一个文本模型及其 API Key，再确认各任务的默认模型。所有前端配置均保存在浏览器 localStorage，可通过备份功能导出。
 
 ### 常用开发脚本
 
@@ -429,7 +429,7 @@ docker push ghcr.io/doudou770/flyreq-image-studio:latest
 
 ### 模型系统
 
-FlyReq Image 采用**用户自定义模型**架构：
+Lynwu Image 采用**用户自定义模型**架构：
 
 - **模型级配置**：每个图片模型和文本模型都独立保存协议、显示名称、模型 ID、API Key 与 Base URL
 - **图像模型**：用户自由添加、编辑、删除，支持设置协议、显示名称、模型 ID、最大参考图数量、最大分辨率
@@ -471,7 +471,7 @@ URL 只需要一个 `provider` 参数，内容是 JSON 字符串。下面使用�
   "preset": "gpt-image-2",
   "provider": "openai",
   "modelKey": "flyreq-gpt-image-2",
-  "name": "FlyReq",
+  "name": "Lynwu",
   "modelId": "gpt-image-2",
   "baseUrl": "https://lynwu.com",
   "apiKey": "YOUR_API_KEY",
@@ -488,7 +488,7 @@ https://image.lynwu.com/zh/?provider=%7B%22type%22%3A%22image%22%2C%22preset%22%
 ```
 
 ```text
-https://image.lynwu.com/zh/?provider={"type":"image","preset":"gpt-image-2","provider":"openai","modelKey":"flyreq-gpt-image-2","name":"FlyReq","modelId":"gpt-image-2","baseUrl":"https://lynwu.com","apiKey":"YOUR_API_KEY","maxRefImages":16,"maxOutputSize":"4K"}
+https://image.lynwu.com/zh/?provider={"type":"image","preset":"gpt-image-2","provider":"openai","modelKey":"flyreq-gpt-image-2","name":"FLynwu,"modelId":"gpt-image-2","baseUrl":"https://lynwu.com","apiKey":"YOUR_API_KEY","maxRefImages":16,"maxOutputSize":"4K"}
 ```
 
 配置完整时，图片模型会成为文生图和图生图默认模型。
@@ -500,7 +500,7 @@ https://image.lynwu.com/zh/?provider={"type":"image","preset":"gpt-image-2","pro
   "type": "text",
   "provider": "openai",
   "modelKey": "flyreq-text-default",
-  "name": "FlyReq Text",
+  "name": "Lynwu Text",
   "modelId": "gpt-5.4-mini",
   "baseUrl": "https://lynwu.com",
   "apiKey": "YOUR_API_KEY",
@@ -509,7 +509,7 @@ https://image.lynwu.com/zh/?provider={"type":"image","preset":"gpt-image-2","pro
 ```
 
 ```text
-https://image.lynwu.com/zh/?provider={"type":"text","provider":"openai","modelKey":"flyreq-text-default","name":"FlyReq Text","modelId":"gpt-5.4-mini","baseUrl":"https://lynwu.com","apiKey":"YOUR_API_KEY","note":"OpenAI Responses 兼容文本模型"}
+https://image.lynwu.com/zh/?provider={"type":"text","provider":"openai","modelKey":"flyreq-text-default","name":"FLynwuText","modelId":"gpt-5.4-mini","baseUrl":"https://lynwu.com","apiKey":"YOUR_API_KEY","note":"OpenAI Responses 兼容文本模型"}
 ```
 
 配置完整时，文本模型会成为 Agent、反推提示词、提示词优化和图片描述的初始默认模型；用户保存前可以分别调整。文本模型支持 `openai` 和 `google`。
@@ -521,7 +521,7 @@ https://image.lynwu.com/zh/?provider={"type":"text","provider":"openai","modelKe
   "type": "video",
   "protocol": "openai",
   "modelKey": "flyreq-video-default",
-  "name": "FlyReq Video",
+  "name": "Lynwu Video",
   "modelId": "sora-2",
   "baseUrl": "https://api.openai.com",
   "apiKey": "YOUR_API_KEY"
@@ -529,7 +529,7 @@ https://image.lynwu.com/zh/?provider={"type":"text","provider":"openai","modelKe
 ```
 
 ```text
-https://image.lynwu.com/zh/?provider={"type":"video","protocol":"openai","modelKey":"flyreq-video-default","name":"FlyReq Video","modelId":"sora-2","baseUrl":"https://api.openai.com","apiKey":"YOUR_API_KEY"}
+https://image.lynwu.com/zh/?provider={"type":"video","protocol":"openai","modelKey":"flyreq-video-default","name":"FLynwuVideo","modelId":"sora-2","baseUrl":"https://api.openai.com","apiKey":"YOUR_API_KEY"}
 ```
 
 
@@ -598,24 +598,24 @@ https://image.lynwu.com/zh/?provider={"type":"video","protocol":"openai","modelK
 | `FLYREQ_IMAGE_DIR` | 否 | `backend/flyreq-images/` | 任务产物落盘目录 |
 | `FLYREQ_REMOTE_IMAGE_MAX_BYTES` | 否 | `52428800` | 服务端下载远程生成图片的最大字节数，范围为 1024 至 209715200 |
 | `FLYREQ_BASE_URL_REWRITE_MAP` | 否 | 空 | Base URL 出站改写表；例如 `{"https://lynwu.com":"http://new-api:3000"}` |
-| `FLYREQ_OUTBOUND_USER_AGENT` | 否 | `FlyReq-Image-Studio/1.5.1` | 上游请求携带的稳定服务标识；请配置为部署方可追溯的产品名称，不要伪造浏览器或第三方服务身份 |
+| `FLYREQ_OUTBOUND_USER_AGENT` | 否 | `Lynwu-Image-Studio/1.5.1` | 上游请求携带的稳定服务标识；请配置为部署方可追溯的产品名称，不要伪造浏览器或第三方服务身份 |
 | `FLYREQ_FILE_LOG_ENABLED` | 否 | `true` | 是否将全部后端标准日志按日期写入文件；`false`、`0`、`no`、`off` 关闭 |
 | `FLYREQ_LOG_DIR` | 否 | `backend/logs/application` | 按日期分割的后端应用 JSONL 日志目录；Docker Compose 使用 `/app/backend/logs/application` |
-| `FLYREQ_PLATFORM_NAME` | 否 | `FlyReq Image` | 平台名称；用于页面标题、Header、设置页和 PWA 名称 |
+| `FLYREQ_PLATFORM_NAME` | 否 | `Lynwu Image` | 平台名称；用于页面标题、Header、设置页和 PWA 名称 |
 | `FLYREQ_PLATFORM_LOGO_URL` | 否 | `/favicon.png` | Header Logo；建议正方形且至少 `128x128`，支持 PNG/WebP/SVG |
 | `FLYREQ_PLATFORM_ICON_URL` | 否 | `/favicon.png` | 浏览器 favicon；建议使用 `48x48` PNG 或 ICO，不作为 PWA 安装图标 |
 | `FLYREQ_PWA_ICON_192_URL` | 否 | `/icon-192.png` | PWA 普通图标；必须为 `192x192` PNG |
 | `FLYREQ_PWA_ICON_512_URL` | 否 | `/icon-512.png` | PWA 高清普通图标；必须为 `512x512` PNG |
 | `FLYREQ_PWA_MASKABLE_ICON_512_URL` | 否 | `/icon-maskable-512.png` | PWA Maskable 图标；必须为 `512x512` PNG，重要内容放在中心 80% 安全区域 |
 | `FLYREQ_IMAGE_MODEL_KEY_GUIDE_TITLE` | 否 | `还没有图片模型 API Key？` | 设置页图片模型 Key 指引标题 |
-| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_DESCRIPTION` | 否 | FlyReq 默认说明 | 设置页图片模型 Key 指引描述 |
+| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_DESCRIPTION` | 否 | Lynwu 默认说明 | 设置页图片模型 Key 指引描述 |
 | `FLYREQ_IMAGE_MODEL_KEY_GUIDE_CTA_LABEL` | 否 | `前往 lynwu.com` | 设置页图片模型 Key 指引按钮文字 |
 | `FLYREQ_IMAGE_MODEL_KEY_GUIDE_URL` | 否 | `https://lynwu.com` | 设置页图片模型 Key 指引跳转地址 |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_KEY` | 否 | `flyreq-gpt-image-2` | 首次默认图片模型的稳定内部 Key |
-| `FLYREQ_DEFAULT_IMAGE_MODEL_NAME` | 否 | `FlyReq` | 首次默认图片模型的显示名称 |
+| `FLYREQ_DEFAULT_IMAGE_MODEL_NAME` | 否 | `Lynwu` | 首次默认图片模型的显示名称 |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_PROTOCOL` | 否 | `openai` | 首次默认图片模型协议：`openai` 或 `google` |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_KEY` | 否 | `flyreq-sora-2` | 首次默认视频模型的稳定内部 Key |
-| `FLYREQ_DEFAULT_VIDEO_MODEL_NAME` | 否 | `FlyReq` | 首次默认视频模型的显示名称 |
+| `FLYREQ_DEFAULT_VIDEO_MODEL_NAME` | 否 | `Lynwu` | 首次默认视频模型的显示名称 |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_PROTOCOL` | 否 | `openai` | 首次默认视频模型协议：`new-api`、`openai` 或 `xai` |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_BASE_URL` | 否 | `https://lynwu.com` | 首次默认视频模型的 Base URL |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_MODEL_ID` | 否 | `sora-2` | 首次默认视频模型的上游模型 ID |
@@ -719,7 +719,7 @@ FLYREQ_ACCEPT_NEW_TASKS=false
 创建后 12 小时；前端在拿到结果后会调用 `/ack` 续期 2 分钟，给下载留时间。超过 TTL 服务端删除数据库记录与产物图片。
 
 **New API 已经生成成功，为什么前端仍然显示 504？**
-如果 FlyReq Image 后端通过 Cloudflare 橙云域名访问 New API，长时间无响应的图片生成请求可能被 Cloudflare / Nginx 网关提前截断，New API 控制台仍可能显示上游任务成功。推荐优先让 FlyReq Image 后端使用 New API 的 Docker 内网地址或灰云域名；同时可在对应图片模型中开启“流式图片请求”，让兼容接口通过 `stream=true` 持续返回事件，降低 504 概率。上游不支持该参数时，任务会直接失败并保留错误信息。
+如果 Lynwu Image 后端通过 Cloudflare 橙云域名访问 New API，长时间无响应的图片生成请求可能被 Cloudflare / Nginx 网关提前截断，New API 控制台仍可能显示上游任务成功。推荐优先让 Lynwu Image 后端使用 New API 的 Docker 内网地址或灰云域名；同时可在对应图片模型中开启“流式图片请求”，让兼容接口通过 `stream=true` 持续返回事件，降低 504 概率。上游不支持该参数时，任务会直接失败并保留错误信息。
 
 ---
 

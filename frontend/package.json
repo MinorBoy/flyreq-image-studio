@@ -2,7 +2,7 @@
   "name": "flyreq-image-studio-frontend",
   "version": "1.5.1",
   "private": true,
-  "description": "FlyReq Image 前端 - Next.js 应用",
+  "description": "Lynwu Image 前端 - Next.js 应用",
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",

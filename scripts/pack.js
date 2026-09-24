@@ -53,7 +53,7 @@ const rootPkg = {
   name: 'flyreq-image-studio',
   version: backendPkg.version || '1.0.0',
   private: true,
-  description: 'FlyReq Image - 生产部署包',
+  description: 'Lynwu Image - 生产部署包',
   scripts: {
     start: 'node backend/server.js',
   },

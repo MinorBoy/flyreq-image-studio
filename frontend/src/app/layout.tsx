@@ -7,8 +7,8 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/storage-contract";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FlyReq Image - AI Image Generator",
-  description: "FlyReq Image AI image generation workspace",
+  title: "Lynwu Image - AI Image Generator",
+  description: "Lynwu Image AI image generation workspace",
   icons: {
     icon: [
       { url: '/favicon.png', type: 'image/png' },

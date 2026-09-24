@@ -98,11 +98,11 @@ describe('settings-storage model availability', () => {
     });
   });
 
-  it('ships a default FlyReq image model without unlocking image workflows before the key is filled', () => {
+  it('ships a default Lynwu image model without unlocking image workflows before the key is filled', () => {
     const registry = loadRegistry();
     expect(registry.imageModels[0]).toMatchObject({
       protocol: 'openai',
-      name: 'FlyReq',
+      name: 'Lynwu',
       modelId: '',
       usesPresetModelId: true,
       apiKey: '',

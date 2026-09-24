@@ -10,7 +10,7 @@ export interface PlatformBranding {
 }
 
 const DEFAULT_PLATFORM_BRANDING: PlatformBranding = {
-  platformName: 'FlyReq Image',
+  platformName: 'Lynwu Image',
   logoUrl: '/favicon.png',
   iconUrl: '/favicon.png',
   platformVersion: '0.0.0',

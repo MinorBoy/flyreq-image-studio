@@ -1,4 +1,4 @@
-# FlyReq Image Studio
+# Lynwu Image Studio
 
 <p align="right"><a href="./README.md">简体中文</a> | <strong>English</strong></p>
 
@@ -18,7 +18,7 @@
 
 ## Overview
 
-FlyReq Image Studio is a self-hosted AI image and video creation workspace for individuals and teams. It combines a static Next.js 16 + React 19 PWA frontend with a lightweight Node.js, SQLite, and WebSocket backend that queues jobs and proxies image- and video-generation APIs.
+Lynwu Image Studio is a self-hosted AI image and video creation workspace for individuals and teams. It combines a static Next.js 16 + React 19 PWA frontend with a lightweight Node.js, SQLite, and WebSocket backend that queues jobs and proxies image- and video-generation APIs.
 
 Built from [tianjiangqiji/nova-image-studio](https://github.com/tianjiangqiji/nova-image-studio) and maintained at [doudou770/flyreq-image-studio](https://github.com/doudou770/flyreq-image-studio).
 
@@ -87,12 +87,12 @@ Built from [tianjiangqiji/nova-image-studio](https://github.com/tianjiangqiji/no
   <tr>
     <td width="180" align="center">
       <a href="https://lynwu.com">
-        <img src="frontend/public/icon-512.png" width="112" alt="FlyReq" />
+        <img src="frontend/public/icon-512.png" width="112" alt="Lynwu" />
       </a>
     </td>
     <td>
-      <strong>Thanks to <a href="https://lynwu.com">FlyReq</a> for sponsoring this project.</strong><br /><br />
-      FlyReq is an AI model API relay platform focused on high-discount access for developers and teams looking for a cost-effective way to connect the models they need.<br /><br />
+      <strong>Thanks to <a href="https://lynwu.com">FLynwu/a> for sponsoring this project.</strong><br /><br />
+      Lynwu is an AI model API relay platform focused on high-discount access for developers and teams looking for a cost-effective way to connect the models they need.<br /><br />
       New registrations receive trial credit for validating model capabilities and integration flows. Visit <a href="https://lynwu.com">lynwu.com</a> to learn more and get started.
     </td>
   </tr>
@@ -318,7 +318,7 @@ cp backend/.env.example backend/.env
 npm run dev
 ```
 
-Open <http://localhost:3001>. At first startup, the image workspace uses the deployment default image model, or the FlyReq / GPT Image 2 preset if no deployment default is configured. API keys are not delivered through deployment settings. Add image and text model API keys in **Settings**, then confirm workflow defaults. Browser-side configuration can be exported through backup.
+Open <http://localhost:3001>. At first startup, the image workspace uses the deployment default image model, or the Lynwu / GPT Image 2 preset if no deployment default is configured. API keys are not delivered through deployment settings. Add image and text model API keys in **Settings**, then confirm workflow defaults. Browser-side configuration can be exported through backup.
 
 ### Common scripts
 
@@ -390,7 +390,7 @@ Gallery content lives in `backend/prompts.json` and supports filtering through `
 
 ## External Model Configuration Links
 
-External sites can link to FlyReq Image with a `provider` query parameter containing one image, text, or video model configuration as JSON. The application opens Settings, fills the corresponding model draft, removes all configuration parameters from the address bar, and waits for the user to save. Importing a link never writes configuration automatically.
+External sites can link to Lynwu Image with a `provider` query parameter containing one image, text, or video model configuration as JSON. The application opens Settings, fills the corresponding model draft, removes all configuration parameters from the address bar, and waits for the user to save. Importing a link never writes configuration automatically.
 
 Use URL-encoded JSON in production. The raw links below are readable examples; generate a production value with `encodeURIComponent(JSON.stringify(payload))`.
 
@@ -402,7 +402,7 @@ Use URL-encoded JSON in production. The raw links below are readable examples; g
   "preset": "gpt-image-2",
   "provider": "openai",
   "modelKey": "flyreq-gpt-image-2",
-  "name": "FlyReq",
+  "name": "Lynwu",
   "modelId": "gpt-image-2",
   "baseUrl": "https://lynwu.com",
   "apiKey": "YOUR_API_KEY",
@@ -414,7 +414,7 @@ Use URL-encoded JSON in production. The raw links below are readable examples; g
 ```
 
 ```text
-https://image.lynwu.com/en/?provider={"type":"image","preset":"gpt-image-2","provider":"openai","modelKey":"flyreq-gpt-image-2","name":"FlyReq","modelId":"gpt-image-2","baseUrl":"https://lynwu.com","apiKey":"YOUR_API_KEY","maxRefImages":16,"maxOutputSize":"4K"}
+https://image.lynwu.com/en/?provider={"type":"image","preset":"gpt-image-2","provider":"openai","modelKey":"flyreq-gpt-image-2","name":"FLynwu,"modelId":"gpt-image-2","baseUrl":"https://lynwu.com","apiKey":"YOUR_API_KEY","maxRefImages":16,"maxOutputSize":"4K"}
 ```
 
 URL-encoded JSON:
@@ -431,7 +431,7 @@ When complete, the imported image model becomes the text-to-image and image-to-i
   "type": "text",
   "provider": "openai",
   "modelKey": "flyreq-text-default",
-  "name": "FlyReq Text",
+  "name": "Lynwu Text",
   "modelId": "gpt-5.4-mini",
   "baseUrl": "https://lynwu.com",
   "apiKey": "YOUR_API_KEY",
@@ -440,7 +440,7 @@ When complete, the imported image model becomes the text-to-image and image-to-i
 ```
 
 ```text
-https://image.lynwu.com/en/?provider={"type":"text","provider":"openai","modelKey":"flyreq-text-default","name":"FlyReq Text","modelId":"gpt-5.4-mini","baseUrl":"https://lynwu.com","apiKey":"YOUR_API_KEY","note":"OpenAI Responses-compatible text model"}
+https://image.lynwu.com/en/?provider={"type":"text","provider":"openai","modelKey":"flyreq-text-default","name":"FLynwuText","modelId":"gpt-5.4-mini","baseUrl":"https://lynwu.com","apiKey":"YOUR_API_KEY","note":"OpenAI Responses-compatible text model"}
 ```
 
 When complete, the imported text model becomes the initial default for Agent, reverse prompt, prompt optimization, and image description. Users can change each default before saving. Text models support `openai` and `google`.
@@ -452,7 +452,7 @@ When complete, the imported text model becomes the initial default for Agent, re
   "type": "video",
   "protocol": "openai",
   "modelKey": "flyreq-video-default",
-  "name": "FlyReq Video",
+  "name": "Lynwu Video",
   "modelId": "sora-2",
   "baseUrl": "https://api.openai.com",
   "apiKey": "YOUR_API_KEY"
@@ -460,7 +460,7 @@ When complete, the imported text model becomes the initial default for Agent, re
 ```
 
 ```text
-https://image.lynwu.com/en/?provider={"type":"video","protocol":"openai","modelKey":"flyreq-video-default","name":"FlyReq Video","modelId":"sora-2","baseUrl":"https://api.openai.com","apiKey":"YOUR_API_KEY"}
+https://image.lynwu.com/en/?provider={"type":"video","protocol":"openai","modelKey":"flyreq-video-default","name":"FLynwuVideo","modelId":"sora-2","baseUrl":"https://api.openai.com","apiKey":"YOUR_API_KEY"}
 ```
 
 When complete, the imported video model becomes the video-generation default. Video links accept the `new-api`, `openai`, and `xai` protocols. Use the explicit `protocol` field for new links; the historical `provider=openai` form remains mapped to the legacy video endpoint.
@@ -530,21 +530,21 @@ The API key is briefly present in browser history, proxy logs, chat previews, an
 | `FLYREQ_IMAGE_DIR` | No | `backend/flyreq-images/` | Directory for generated image files. |
 | `FLYREQ_REMOTE_IMAGE_MAX_BYTES` | No | `52428800` | Maximum bytes downloaded for a remote generated image; range 1024 to 209715200. |
 | `FLYREQ_BASE_URL_REWRITE_MAP` | No | Empty | Outbound base-URL rewrite map, for example `{"https://lynwu.com":"http://new-api:3000"}`. |
-| `FLYREQ_OUTBOUND_USER_AGENT` | No | `FlyReq-Image-Studio/1.5.1` | Stable identifier sent upstream. Use a deployment-traceable product name; do not impersonate browsers or third-party services. |
+| `FLYREQ_OUTBOUND_USER_AGENT` | No | `Lynwu-Image-Studio/1.5.1` | Stable identifier sent upstream. Use a deployment-traceable product name; do not impersonate browsers or third-party services. |
 | `FLYREQ_FILE_LOG_ENABLED` | No | `true` | Mirror standard backend logs to date-split files; set `false`, `0`, `no`, or `off` to disable. |
 | `FLYREQ_LOG_DIR` | No | `backend/logs/application` | Directory for date-split backend application JSONL logs; Docker Compose uses `/app/backend/logs/application`. |
-| `FLYREQ_PLATFORM_NAME` | No | `FlyReq Image` | Product name used in the page title, header, Settings, and PWA. |
+| `FLYREQ_PLATFORM_NAME` | No | `Lynwu Image` | Product name used in the page title, header, Settings, and PWA. |
 | `FLYREQ_PLATFORM_LOGO_URL` | No | `/favicon.png` | Header logo; use a square PNG/WebP/SVG image of at least `128x128`. |
 | `FLYREQ_PLATFORM_ICON_URL` | No | `/favicon.png` | Browser favicon; use a `48x48` PNG or ICO. It is not reused as a PWA install icon. |
 | `FLYREQ_PWA_ICON_192_URL` | No | `/icon-192.png` | Standard PWA icon; must be a `192x192` PNG. |
 | `FLYREQ_PWA_ICON_512_URL` | No | `/icon-512.png` | High-resolution PWA icon; must be a `512x512` PNG. |
 | `FLYREQ_PWA_MASKABLE_ICON_512_URL` | No | `/icon-maskable-512.png` | Maskable PWA icon; must be a `512x512` PNG with important content inside the central 80% safe zone. |
 | `FLYREQ_IMAGE_MODEL_KEY_GUIDE_TITLE` | No | `Need an image model API key?` | Image-model key guide title in Settings. |
-| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_DESCRIPTION` | No | FlyReq default description | Image-model key guide description in Settings. |
+| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_DESCRIPTION` | No | Lynwu default description | Image-model key guide description in Settings. |
 | `FLYREQ_IMAGE_MODEL_KEY_GUIDE_CTA_LABEL` | No | `Visit lynwu.com` | Image-model key guide button label. |
 | `FLYREQ_IMAGE_MODEL_KEY_GUIDE_URL` | No | `https://lynwu.com` | Image-model key guide destination. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_KEY` | No | `flyreq-gpt-image-2` | Stable internal key for the first default image model. |
-| `FLYREQ_DEFAULT_IMAGE_MODEL_NAME` | No | `FlyReq` | Display name of the first default image model. |
+| `FLYREQ_DEFAULT_IMAGE_MODEL_NAME` | No | `Lynwu` | Display name of the first default image model. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_PROTOCOL` | No | `openai` | First default image-model protocol: `openai` or `google`. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_BASE_URL` | No | `https://lynwu.com` | Base URL of the first default image model. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_MODEL_ID` | No | Empty | Actual model ID. When blank, the preset model-ID mapping is used. |
@@ -555,7 +555,7 @@ The API key is briefly present in browser history, proxy logs, chat previews, an
 | `FLYREQ_DEFAULT_IMAGE_MODEL_SUPPORTS_TEMPERATURE` | No | `false` | Whether the Google image model supports `temperature` by default. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_STREAM_IMAGES` | No | `true` | Enables streaming image requests for OpenAI GPT Image 2 by default. |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_KEY` | No | `flyreq-sora-2` | Stable internal key for the first default video model. |
-| `FLYREQ_DEFAULT_VIDEO_MODEL_NAME` | No | `FlyReq` | Display name of the first default video model. |
+| `FLYREQ_DEFAULT_VIDEO_MODEL_NAME` | No | `Lynwu` | Display name of the first default video model. |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_PROTOCOL` | No | `openai` | First default video-model protocol: `new-api`, `openai`, or `xai`. |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_BASE_URL` | No | `https://lynwu.com` | Base URL of the first default video model. |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_MODEL_ID` | No | `sora-2` | Upstream model ID of the first default video model. |
@@ -641,7 +641,7 @@ It takes effect after saving. Wait for in-flight tasks before restarting for an 
 
 Tasks expire 12 hours after creation. When the frontend receives a result, it calls `/ack` to extend retrieval by two minutes. The server removes the database record and result images after expiry.
 
-**Why can an upstream console show success while FlyReq Image reports 504?**
+**Why can an upstream console show success while Lynwu Image reports 504?**
 
 Cloudflare, Nginx, or another gateway can close a long-running response before the upstream image job finishes. Prefer a Docker-internal or DNS-only upstream address, configure `FLYREQ_BASE_URL_REWRITE_MAP`, and enable streaming image requests for compatible OpenAI Images endpoints. The original upstream error is kept in the task failure message.
 

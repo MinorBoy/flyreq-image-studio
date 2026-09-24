@@ -386,7 +386,7 @@ export async function exportAllData(onProgress?: ProgressCallback, appVersion: s
         version: appVersion,
         storageContractVersion: STORAGE_CONTRACT_VERSION,
         exportDate: new Date().toISOString(),
-        appName: 'FlyReq Image',
+        appName: 'Lynwu Image',
     });
 
     // 添加 localStorage 数据

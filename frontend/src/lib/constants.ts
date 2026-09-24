@@ -14,7 +14,7 @@ export const BING_WALLPAPER_URL = 'https://bing.img.run/rand_uhd.php';
 /** 图片模型 Key 配置指引，可按部署需要自由修改 */
 export const IMAGE_MODEL_KEY_GUIDE = {
   title: '还没有图片模型 API Key？',
-  description: '默认已为你准备 FlyReq 的 GPT Image 2 图片模型，只需要前往 FlyReq 获取 API Key，填入后保存即可开始生成图片。1元=20张4k图。',
+  description: '默认已为你准备 Lynwu 的 GPT Image 2 图片模型，只需要前往 Lynwu 获取 API Key，填入后保存即可开始生成图片。1元=20张4k图。',
   ctaLabel: '前往 lynwu.com',
   url: 'https://lynwu.com',
 };
