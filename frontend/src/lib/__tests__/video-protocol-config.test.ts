@@ -85,6 +85,29 @@ describe('视频协议能力配置', () => {
     }
   });
 
+  it('按 MiniMax H3 精确模型匹配能力并校验参数边界', () => {
+    const config = resolveVideoProtocolConfig({});
+    const h3 = resolveVideoProtocolProfile(config, 'new-api', 'MiniMax-H3');
+    const alias = resolveVideoProtocolProfile(config, 'new-api', 'minimax-h3-vip');
+    expect(h3.parameters.duration).toEqual(expect.objectContaining({ min: 4, max: 15 }));
+    expect(h3.parameters.resolution.values).toEqual([720, 768, 2048]);
+    expect(h3.parameters.aspectRatio.values).toContain('auto');
+    expect(h3.references).toEqual(expect.objectContaining({ maxTotal: 15, audioRequiresVisual: true }));
+    expect(alias.parameters.duration).toEqual(expect.objectContaining({ min: 1, max: 60 }));
+    expect(() => validateVideoProtocolRequest(config, 'new-api', 'MiniMax-H3', {
+      seconds: 16, size: 'auto', aspectRatio: 'auto', resolution: 768,
+      referenceUrls: { images: [], videos: [], audios: [] },
+    }, emptyFiles)).toThrow('视频时长不符合当前协议限制');
+    expect(() => validateVideoProtocolRequest(config, 'new-api', 'MiniMax-H3', {
+      seconds: 10, size: 'auto', aspectRatio: 'auto', resolution: 1080,
+      referenceUrls: { images: [], videos: [], audios: [] },
+    }, emptyFiles)).toThrow('视频清晰度不符合当前协议限制');
+    expect(() => validateVideoProtocolRequest(config, 'new-api', 'MiniMax-H3', {
+      seconds: 10, size: 'auto', aspectRatio: 'auto', resolution: 768,
+      referenceUrls: { images: [], videos: [], audios: ['https://cdn.example/audio.mp3'] },
+    }, emptyFiles)).toThrow('参考音频必须同时提供');
+  });
+
   it('按 Sora 模型规则扩展尺寸枚举', () => {
     const config = resolveVideoProtocolConfig({});
     const standard = resolveVideoProtocolProfile(config, 'openai', 'sora-2');

@@ -641,7 +641,7 @@ https://image.lynwu.com/zh/?provider={"type":"video","protocol":"openai","modelK
 
 ### 视频协议配置
 
-视频工作台支持 `new-api`、OpenAI Videos（Sora）和 `xai` 三种协议。协议的时长、尺寸、宽高比、清晰度、参考图数量以及设置页默认 Base URL/模型 ID，统一定义在 `backend/video-protocol-capabilities.json`。后端在 `/api/flyreq/config` 下发合并后的 `videoProtocols`，前端据此显示控件，后端再使用同一配置校验请求。
+视频工作台支持 `new-api`、OpenAI Videos（Sora）和 `xai` 三种协议。`new-api` 下的精确模型 ID `MiniMax-H3` 会自动启用 MiniMax H3 能力路由：仍使用 New API 主入口提交，但请求体采用 ARK `content` 数组形态。协议的时长、尺寸、宽高比、清晰度、参考图数量以及设置页默认 Base URL/模型 ID，统一定义在 `backend/video-protocol-capabilities.json`。后端在 `/api/flyreq/config` 下发合并后的 `videoProtocols`，前端据此显示控件，后端再使用同一配置校验请求。
 
 默认视频模型使用 `FLYREQ_DEFAULT_VIDEO_MODEL_PROTOCOL=openai` 和 `FLYREQ_DEFAULT_VIDEO_MODEL_MODEL_ID=sora-2`。可选协议值如下：
 
@@ -653,7 +653,7 @@ https://image.lynwu.com/zh/?provider={"type":"video","protocol":"openai","modelK
 
 | 协议 | 官方核对结果 | 配置约束来源 |
 | --- | --- | --- |
-| [New API 通用视频](https://www.newapi.ai/zh/docs/api/ai-model/videos/createvideogeneration) | 使用 `POST /v1/video/generations`、`GET /v1/video/generations/{task_id}`，请求字段为 `model`、`prompt`、`image`、`duration`、`width`、`height` | 官方未定义跨上游模型统一的时长和尺寸上限，因此配置标记为 `workspace-default`；内置 1-60 秒和尺寸列表是工作台默认边界，可用环境变量覆盖 |
+| [New API 通用视频](https://www.newapi.ai/zh/docs/api/ai-model/videos/createvideogeneration) | 通用模型使用 `POST /v1/video/generations`、`GET /v1/video/generations/{task_id}`；请求字段为 `model`、`prompt`、`image`、`duration`、`size`、`aspect_ratio` 和 `metadata.resolution` | 官方未定义跨上游模型统一的时长和尺寸上限，因此配置标记为 `workspace-default`；内置 1-60 秒和尺寸列表是工作台默认边界，可用环境变量覆盖。模型 ID 精确为 `MiniMax-H3` 时改用 `content` 数组请求：`text`、`image_url`、`video_url`、`audio_url`，字段为 `resolution`、`duration`、`ratio`、`mode`；H3 使用 `POST /v1/video/generations` 提交和 `GET /v1/videos/{task_id}` 轮询，支持 4-15 秒、720p/768p/2k、最多 9/3/3 个 URL 参考媒体且音频必须伴随图片或视频 |
 | [OpenAI Videos（Sora）](https://developers.openai.com/api/docs/guides/video-generation) | 使用 `POST /v1/videos`、`GET /v1/videos/{video_id}`、`GET /v1/videos/{video_id}/content`；支持 Sora 官方时长/尺寸，参考图采用 `input_reference` | `official`；后端校验 JPEG/PNG/WebP 格式、文件大小和数量，不限制参考素材像素尺寸 |
 | [xAI Videos](https://docs.x.ai/developers/model-capabilities/video/generation) | 使用 `POST /v1/videos/generations`、`GET /v1/videos/{request_id}`；时长 1-15 秒，支持官方宽高比与 480p/720p，1.5 模型图生视频支持 1080p | `official`；图生视频的 `image` 按官方要求发送 URL、data URI 或 `file_id` 字符串，不包装为对象 |
 

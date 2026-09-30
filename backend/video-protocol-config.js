@@ -54,7 +54,7 @@ function isValidConfiguredVideoSize(value) {
  * @returns {boolean} 符合“宽:高”格式且两侧均为正整数时返回 true。
  */
 function isValidConfiguredAspectRatio(value) {
-  return typeof value === 'string' && /^[1-9]\d*:[1-9]\d*$/.test(value);
+  return value === 'auto' || (typeof value === 'string' && /^[1-9]\d*:[1-9]\d*$/.test(value));
 }
 
 /**
@@ -126,7 +126,7 @@ function validateProtocolProfile(protocol, profile) {
   if (!profile.settings || !String(profile.settings.baseUrl || '').trim() || typeof profile.settings.presetModelId !== 'string') throw new Error(`视频协议设置模板无效: ${protocol}`);
   if (profile.createEndpoint?.method !== 'POST' || !/^\/v1\/[a-z0-9/-]+$/.test(String(profile.createEndpoint?.path || ''))) throw new Error(`视频协议创建接口无效: ${protocol}`);
   if (!parameters?.duration || !parameters?.size || !parameters?.aspectRatio || !parameters?.resolution) throw new Error(`视频协议参数不完整: ${protocol}`);
-  if (!references || !['multipart', 'url-only'].includes(references.inputMode || 'multipart') || typeof (references.acceptsUrls ?? false) !== 'boolean' || !Number.isInteger(references.images) || references.images < 0 || references.images > MAX_VIDEO_REFERENCE_FILES || !Number.isInteger(references.videos) || references.videos < 0 || references.videos > MAX_VIDEO_REFERENCE_FILES || !Number.isInteger(references.audios) || references.audios < 0 || references.audios > MAX_VIDEO_REFERENCE_FILES) throw new Error(`视频协议附件限制无效: ${protocol}`);
+  if (!references || !['multipart', 'url-only'].includes(references.inputMode || 'multipart') || typeof (references.acceptsUrls ?? false) !== 'boolean' || !Number.isInteger(references.images) || references.images < 0 || references.images > MAX_VIDEO_REFERENCE_FILES || !Number.isInteger(references.videos) || references.videos < 0 || references.videos > MAX_VIDEO_REFERENCE_FILES || !Number.isInteger(references.audios) || references.audios < 0 || references.audios > MAX_VIDEO_REFERENCE_FILES || (references.maxTotal !== undefined && (!Number.isInteger(references.maxTotal) || references.maxTotal < 0 || references.maxTotal > MAX_VIDEO_REFERENCE_FILES * 3)) || (references.audioRequiresVisual !== undefined && typeof references.audioRequiresVisual !== 'boolean')) throw new Error(`视频协议附件限制无效: ${protocol}`);
   if (references.inputMode === 'url-only' && references.acceptsUrls !== true) throw new Error(`URL-only 视频协议必须声明 acceptsUrls: ${protocol}`);
   if (!Array.isArray(references.imageMimeTypes) || references.imageMimeTypes.length === 0 || references.imageMimeTypes.some(value => !isValidConfiguredMediaMimeType(value, 'image')) || !Array.isArray(references.videoMimeTypes) || references.videoMimeTypes.length === 0 || references.videoMimeTypes.some(value => !isValidConfiguredMediaMimeType(value, 'video')) || !Array.isArray(references.audioMimeTypes) || references.audioMimeTypes.length === 0 || references.audioMimeTypes.some(value => !isValidConfiguredMediaMimeType(value, 'audio')) || typeof references.imageSizeMustMatchOutput !== 'boolean') throw new Error(`视频协议参考附件配置无效: ${protocol}`);
   const duration = parameters.duration;
@@ -138,7 +138,7 @@ function validateProtocolProfile(protocol, profile) {
   if (!Array.isArray(parameters.size.values) || parameters.size.values.some(value => !isValidConfiguredVideoSize(value)) || !Array.isArray(parameters.aspectRatio.values) || parameters.aspectRatio.values.some(value => !isValidConfiguredAspectRatio(value)) || !Array.isArray(parameters.resolution.values) || parameters.resolution.values.some(value => !Number.isInteger(value) || value < MIN_VIDEO_RESOLUTION || value > MAX_VIDEO_RESOLUTION)) throw new Error(`视频协议参数枚举无效: ${protocol}`);
   if (typeof parameters.aspectRatio.visible !== 'boolean' || typeof parameters.resolution.visible !== 'boolean' || typeof parameters.resolution.allowCustom !== 'boolean') throw new Error(`视频协议控件配置无效: ${protocol}`);
   if (!Array.isArray(profile.modelProfiles)) throw new Error(`视频模型能力规则无效: ${protocol}`);
-  if (profile.modelProfiles.some(rule => !rule || typeof rule.modelPrefix !== 'string' || typeof rule.requiresImage !== 'boolean' || !rule.patch || typeof rule.patch !== 'object' || Array.isArray(rule.patch))) throw new Error(`视频模型能力规则无效: ${protocol}`);
+  if (profile.modelProfiles.some(rule => !rule || typeof rule.modelPrefix !== 'string' || typeof rule.requiresImage !== 'boolean' || (rule.match !== undefined && !['prefix', 'exact'].includes(rule.match)) || !rule.patch || typeof rule.patch !== 'object' || Array.isArray(rule.patch))) throw new Error(`视频模型能力规则无效: ${protocol}`);
 }
 
 /**
@@ -201,7 +201,11 @@ function resolveVideoProtocolProfile(config, protocol, modelId, context = {}) {
   if (!base) return null;
   let resolved = cloneJson(base);
   for (const rule of base.modelProfiles || []) {
-    if (!String(modelId || '').startsWith(String(rule.modelPrefix || ''))) continue;
+    const candidate = String(modelId || '');
+    const modelMatches = rule.match === 'exact'
+      ? candidate.toLowerCase() === String(rule.modelPrefix || '').toLowerCase()
+      : candidate.startsWith(String(rule.modelPrefix || ''));
+    if (!modelMatches) continue;
     if (rule.requiresImage && !context.hasImage) continue;
     resolved = applyJsonMergePatch(resolved, rule.patch || {});
   }
@@ -247,6 +251,9 @@ function validateVideoProtocolRequest(config, protocol, modelId, request, files)
   const imageCount = files.images.length + referenceUrls.images.length;
   const videoCount = files.videos.length + referenceUrls.videos.length;
   const audioCount = files.audios.length + referenceUrls.audios.length;
+  const totalReferenceCount = imageCount + videoCount + audioCount;
+  if (profile.references.maxTotal !== undefined && totalReferenceCount > profile.references.maxTotal) throw new Error('参考附件总数超过当前协议限制');
+  if (profile.references.audioRequiresVisual && audioCount > 0 && imageCount + videoCount === 0) throw new Error('参考音频必须同时提供参考图片或参考视频');
   const duration = profile.parameters.duration;
   const durationValid = duration.mode === 'enum'
     ? Array.isArray(duration.values) && duration.values.includes(request.seconds)

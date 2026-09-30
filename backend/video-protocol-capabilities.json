@@ -14,7 +14,34 @@
         "resolution": { "visible": true, "values": [480, 720, 1080, 2160], "allowCustom": true }
       },
       "references": { "inputMode": "url-only", "acceptsUrls": true, "images": 9, "videos": 3, "audios": 3, "imageMimeTypes": ["image/*"], "videoMimeTypes": ["video/*"], "audioMimeTypes": ["audio/*"], "imageSizeMustMatchOutput": false },
-      "modelProfiles": []
+      "modelProfiles": [
+        {
+          "modelPrefix": "minimax-h3",
+          "match": "exact",
+          "requiresImage": false,
+          "patch": {
+            "parameters": {
+              "duration": { "mode": "range", "min": 4, "max": 15, "presets": [4, 5, 6, 8, 10, 12, 15] },
+              "size": { "visible": false, "mode": "dimensions", "values": ["auto"], "allowCustom": false },
+              "aspectRatio": { "visible": true, "values": ["auto", "1:1", "16:9", "9:16", "21:9", "3:4", "4:3"] },
+              "resolution": { "visible": true, "values": [720, 768, 2048], "allowCustom": false }
+            },
+            "references": {
+              "inputMode": "url-only",
+              "acceptsUrls": true,
+              "images": 9,
+              "videos": 3,
+              "audios": 3,
+              "maxTotal": 15,
+              "audioRequiresVisual": true,
+              "imageMimeTypes": ["image/*"],
+              "videoMimeTypes": ["video/*"],
+              "audioMimeTypes": ["audio/*"],
+              "imageSizeMustMatchOutput": false
+            }
+          }
+        }
+      ]
     },
     "openai": {
       "label": "OpenAI Videos (Sora)",

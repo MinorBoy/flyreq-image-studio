@@ -2164,6 +2164,11 @@ function getMessageFromPayload(payload) {
     if (typeof error.code === 'string' && error.code.trim()) return error.code.trim();
   }
 
+  if (payload.task && typeof payload.task === 'object') {
+    const taskMessage = getMessageFromPayload(payload.task);
+    if (taskMessage) return taskMessage;
+  }
+
   return '';
 }
 
@@ -2734,7 +2739,7 @@ async function pollUpstreamVideo(apiKey, request, upstreamTaskId, signal, trace)
   const intervalMs = parseIntegerEnv(env.FLYREQ_VIDEO_POLL_INTERVAL_MS, 5000, { min: 1000, max: 60000 });
   const timeoutMs = parseIntegerEnv(env.FLYREQ_VIDEO_TIMEOUT_MS, 1800000, { min: 10000, max: 24 * 60 * 60 * 1000 });
   const baseUrl = resolveAndLogOutboundBaseUrl('视频任务轮询', request.protocol, request.baseUrl).baseUrl;
-  const url = appendProtocolApiPath(request.protocol, baseUrl, getVideoPollPath(request.protocol, upstreamTaskId));
+  const url = appendProtocolApiPath(request.protocol, baseUrl, getVideoPollPath(request.protocol, upstreamTaskId, request.model));
   const deadline = Date.now() + timeoutMs;
   const logOptions = getVideoUpstreamLogOptions();
   while (Date.now() < deadline) {

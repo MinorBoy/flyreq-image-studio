@@ -1253,7 +1253,7 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
     [sizeCapability.allowCustom, sizeCapability.values],
   );
   const protocolAspectRatioOptions = useMemo(
-    () => protocolProfile.parameters.aspectRatio.values.filter(isCommonVideoAspectRatio),
+    () => protocolProfile.parameters.aspectRatio.values.filter(value => value === 'auto' || isCommonVideoAspectRatio(value)),
     [protocolProfile.parameters.aspectRatio.values],
   );
   const activeVideoSize = sizeMode === 'custom'
@@ -1279,6 +1279,9 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
   const activeReferenceImageMimeTypesValid = referenceImages.every(file => isAllowedVideoReferenceMimeType(file.type, protocolProfile.references.imageMimeTypes));
   const activeReferenceVideosValid = referenceVideos.length + referenceVideoUrls.length <= maxReferenceVideos && referenceVideos.every(file => isAllowedVideoReferenceMimeType(file.type, protocolProfile.references.videoMimeTypes));
   const activeReferenceAudiosValid = referenceAudios.length + referenceAudioUrls.length <= maxReferenceAudios && referenceAudios.every(file => isAllowedVideoReferenceMimeType(file.type, protocolProfile.references.audioMimeTypes));
+  const totalReferenceCount = referenceImages.length + referenceImageUrls.length + referenceVideos.length + referenceVideoUrls.length + referenceAudios.length + referenceAudioUrls.length;
+  const activeReferenceTotalValid = protocolProfile.references.maxTotal === undefined || totalReferenceCount <= protocolProfile.references.maxTotal;
+  const activeReferenceAudioVisualValid = !protocolProfile.references.audioRequiresVisual || referenceAudios.length + referenceAudioUrls.length === 0 || referenceImages.length + referenceImageUrls.length + referenceVideos.length + referenceVideoUrls.length > 0;
   const hasReferenceUrls = referenceImageUrls.length + referenceVideoUrls.length + referenceAudioUrls.length > 0;
   const hasReferenceFiles = referenceImages.length + referenceVideos.length + referenceAudios.length > 0;
   const activeReferenceUrlSupportValid = (!hasReferenceUrls || videoProtocolAcceptsUrls(protocolProfile)) && (!videoProtocolRequiresUrls(protocolProfile) || !hasReferenceFiles);
@@ -1311,6 +1314,8 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
     if (!activeReferenceImageMimeTypesValid) { showToast(t('video.unsupportedReferenceImageFormat'), 'error'); return; }
     if (!activeReferenceVideosValid) { showToast(t('video.unsupportedReferenceVideo'), 'error'); return; }
     if (!activeReferenceAudiosValid) { showToast(t('video.unsupportedReferenceAudio'), 'error'); return; }
+    if (!activeReferenceTotalValid) { showToast(t('video.referenceTotalLimit', { max: protocolProfile.references.maxTotal || 0 }), 'error'); return; }
+    if (!activeReferenceAudioVisualValid) { showToast(t('video.audioRequiresVisual'), 'error'); return; }
     const batchId = parallelCount > 1 ? generateModelId('video_batch') : undefined;
     const hasReferenceFiles = referenceImages.length + referenceVideos.length + referenceAudios.length > 0;
     const referenceStorageId = hasReferenceFiles ? generateModelId('video_refs') : undefined;
@@ -1408,7 +1413,7 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
     } finally {
       setSubmitting(false);
     }
-  }, [activeAspectRatio, activeAspectRatioValid, activeDurationValid, activeProtocolResolution, activeReferenceAudiosValid, activeReferenceImageCountValid, activeReferenceImageMimeTypesValid, activeReferenceUrlSupportValid, activeReferenceVideosValid, activeResolutionValid, activeSeconds, activeVideoSize, activeVideoSizeValid, maxReferenceImages, onConfigureApiKey, parallelCount, prompt, protocolProfile, referenceAudioUrls, referenceAudios, referenceImageUrls, referenceImages, referenceVideoUrls, referenceVideos, requestModel, selectedModel, showToast, submitPromptVariants, t]);
+  }, [activeAspectRatio, activeAspectRatioValid, activeDurationValid, activeProtocolResolution, activeReferenceAudioVisualValid, activeReferenceAudiosValid, activeReferenceImageCountValid, activeReferenceImageMimeTypesValid, activeReferenceTotalValid, activeReferenceUrlSupportValid, activeReferenceVideosValid, activeResolutionValid, activeSeconds, activeVideoSize, activeVideoSizeValid, maxReferenceImages, onConfigureApiKey, parallelCount, prompt, protocolProfile, referenceAudioUrls, referenceAudios, referenceImageUrls, referenceImages, referenceVideoUrls, referenceVideos, requestModel, selectedModel, showToast, submitPromptVariants, t]);
 
   /**
    * 使用默认文本模型流式优化当前视频提示词。
@@ -1662,6 +1667,8 @@ export function VideoGenerationWorkspace({ wideMode = false, onConfigureApiKey, 
     && activeReferenceImagesValid
     && activeReferenceVideosValid
     && activeReferenceAudiosValid
+    && activeReferenceTotalValid
+    && activeReferenceAudioVisualValid
   );
   const isGrokVideoModel = Boolean(
     selectedModel

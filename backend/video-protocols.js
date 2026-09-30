@@ -72,6 +72,27 @@ function formatVideoResolution(resolution) {
 }
 
 /**
+ * 判断模型 ID 是否为 MiniMax H3 的固定公开别名。
+ * @param {string} modelId 待识别的上游模型 ID。
+ * @returns {boolean} 仅完整匹配 minimax-h3 时返回 true，忽略大小写。
+ */
+function isMiniMaxH3Model(modelId) {
+  return String(modelId || '').trim().toLowerCase() === 'minimax-h3';
+}
+
+/**
+ * 将工作台清晰度映射为 MiniMax H3 接口枚举。
+ * @param {number} resolution 工作台保存的清晰度数值。
+ * @returns {'720p' | '768p' | '2k'} H3 接口要求的清晰度字符串。
+ */
+function formatMiniMaxH3Resolution(resolution) {
+  const resolutions = new Map([[720, '720p'], [768, '768p'], [2048, '2k']]);
+  const formatted = resolutions.get(resolution);
+  if (!formatted) throw new Error('MiniMax H3 清晰度无效');
+  return formatted;
+}
+
+/**
  * 根据协议构造视频创建请求。
  * @param {'new-api' | 'openai' | 'xai'} protocol 视频协议。
  * @param {string} apiKey 上游 API Key。
@@ -90,6 +111,30 @@ function createVideoRequest(protocol, apiKey, request, files) {
   const videoUrls = normalizeReferenceUrlList(referenceUrls.videos, '视频');
   const audioUrls = normalizeReferenceUrlList(referenceUrls.audios, '音频');
   const image = images[0];
+  if (protocol === 'new-api' && isMiniMaxH3Model(request.model)) {
+    if (images.length + videos.length + audios.length > 0) throw new Error('MiniMax H3 仅支持 HTTP(S) URL 参考媒体，不支持本地参考文件');
+    if (audioUrls.length > 0 && imageUrls.length + videoUrls.length === 0) throw new Error('MiniMax H3 参考音频必须同时提供参考图片或参考视频');
+    if (imageUrls.length + videoUrls.length + audioUrls.length > 15) throw new Error('MiniMax H3 参考附件总数不能超过 15');
+    const content = [
+      { type: 'text', text: request.prompt },
+      ...imageUrls.map(url => ({ type: 'image_url', role: 'reference_image', image_url: { url } })),
+      ...videoUrls.map(url => ({ type: 'video_url', role: 'reference_video', video_url: { url } })),
+      ...audioUrls.map(url => ({ type: 'audio_url', role: 'reference_audio', audio_url: { url } })),
+    ];
+    const hasReferenceMedia = imageUrls.length + videoUrls.length + audioUrls.length > 0;
+    const payload = {
+      model: request.model,
+      mode: hasReferenceMedia ? 'reference2video' : 'text2video',
+      content,
+      resolution: formatMiniMaxH3Resolution(request.resolution),
+      duration: request.seconds,
+      ratio: request.aspectRatio,
+    };
+    return {
+      path: '/v1/video/generations',
+      init: { method: 'POST', headers: { ...authorization, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
+    };
+  }
   if (protocol === 'openai') {
     if (imageUrls.length + videoUrls.length + audioUrls.length > 0) throw new Error('openai 协议不支持 URL 参考媒体，请改用本地文件');
     const body = new FormData();
@@ -166,10 +211,12 @@ function getCreatedVideoTaskId(protocol, data) {
  * 返回指定协议的任务查询路径。
  * @param {'new-api' | 'openai' | 'xai'} protocol 视频协议。
  * @param {string} taskId 上游任务标识。
+ * @param {string} [modelId] 实际模型 ID；MiniMax H3 使用 /v1/videos 兼容轮询路径。
  * @returns {string} 已编码任务标识的查询路径。
  */
-function getVideoPollPath(protocol, taskId) {
+function getVideoPollPath(protocol, taskId, modelId = '') {
   const encoded = encodeURIComponent(taskId);
+  if (protocol === 'new-api' && isMiniMaxH3Model(modelId)) return `/v1/videos/${encoded}`;
   return protocol === 'new-api' ? `/v1/video/generations/${encoded}` : `/v1/videos/${encoded}`;
 }
 
@@ -206,18 +253,32 @@ function resolveVideoRemoteUrl(remoteUrl, baseUrl) {
  * @returns {{ state: 'pending' | 'completed' | 'failed' | 'invalid', remoteUrl?: string }} 统一任务状态。
  */
 function normalizeVideoPollResult(protocol, data, baseUrl, taskId) {
-  const status = String(data?.status || '').toLowerCase();
+  const task = data?.task && typeof data.task === 'object' ? data.task : data;
+  const status = String(task?.status || data?.status || '').toLowerCase();
   if (['failed', 'cancelled', 'expired'].includes(status)) return { state: 'failed' };
 
-  // 不论请求协议为何，优先识别第三方兼容服务常见的两种直接结果地址。
-  const remoteUrl = [data?.video?.url, data?.url].find(value => typeof value === 'string' && value.trim());
+  // 不论请求协议为何，优先识别第三方兼容服务常见的直接结果地址。
+  const remoteUrl = [
+    task?.metadata?.url,
+    task?.metadata?.video_url,
+    data?.metadata?.url,
+    data?.metadata?.video_url,
+    task?.video_url,
+    data?.video_url,
+    task?.content?.url,
+    task?.content?.video_url,
+    data?.video?.url,
+    task?.video?.url,
+    data?.url,
+    task?.url,
+  ].find(value => typeof value === 'string' && value.trim());
   if (remoteUrl) return { state: 'completed', remoteUrl: resolveVideoRemoteUrl(remoteUrl, baseUrl) };
 
   // OpenAI 官方完成态不返回结果 URL，需要通过同一任务的 content 端点下载。
   if (status === 'completed' && protocol === 'openai') {
     return { state: 'completed', remoteUrl: appendVideoApiPath(baseUrl, `/v1/videos/${encodeURIComponent(taskId)}/content`) };
   }
-  if (status === 'completed') return { state: 'invalid' };
+  if (['completed', 'succeeded', 'done'].includes(status)) return { state: 'invalid' };
   return { state: 'pending' };
 }
 
@@ -227,6 +288,7 @@ module.exports = {
   getCreatedVideoTaskId,
   getVideoDownloadHeaders,
   getVideoPollPath,
+  isMiniMaxH3Model,
   isVideoProtocol,
   normalizeVideoPollResult,
   resolveVideoRemoteUrl,

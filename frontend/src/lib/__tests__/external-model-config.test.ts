@@ -86,9 +86,12 @@ describe('external model config URL parser', () => {
     const xaiUrl = new URL(`https://example.com/?provider=${encodeURIComponent(JSON.stringify({ type: 'video', protocol: 'xai', name: 'xAI', modelId: 'grok-imagine-video' }))}`);
     const seedanceUrl = new URL(`https://example.com/?provider=${encodeURIComponent(JSON.stringify({ type: 'video', protocol: 'seedance', name: 'Seedance', modelId: 'doubao-seedance-1-0', baseUrl: 'https://ark.example.com' }))}`);
 
+    const h3Url = new URL('https://example.com/?configureModel=1&type=video&protocol=new-api&name=MiniMax&modelId=MiniMax-H3&baseUrl=https%3A%2F%2Fvideo.example.com');
+
     expect(parseExternalModelConfig(newApiUrl)).toMatchObject({ type: 'video', protocol: 'new-api' });
     expect(parseExternalModelConfig(xaiUrl)).toMatchObject({ type: 'video', protocol: 'xai' });
     expect(parseExternalModelConfig(seedanceUrl)).toMatchObject({ type: 'video', protocol: 'seedance', modelId: 'doubao-seedance-1-0' });
+    expect(parseExternalModelConfig(h3Url)).toMatchObject({ type: 'video', protocol: 'new-api', modelId: 'MiniMax-H3' });
   });
 
   it('仅在显式 protocol 字段中启用新的 OpenAI Videos 协议', () => {

@@ -23,8 +23,8 @@ export interface VideoProtocolProfile {
     aspectRatio: { visible: boolean; values: string[] };
     resolution: { visible: boolean; values: number[]; allowCustom: boolean };
   };
-  references: { inputMode: 'multipart' | 'url-only'; acceptsUrls: boolean; images: number; videos: number; audios: number; imageMimeTypes: string[]; videoMimeTypes: string[]; audioMimeTypes: string[]; imageSizeMustMatchOutput: boolean };
-  modelProfiles: Array<{ modelPrefix: string; requiresImage: boolean; patch: Partial<VideoProtocolProfile> }>;
+  references: { inputMode: 'multipart' | 'url-only'; acceptsUrls: boolean; images: number; videos: number; audios: number; maxTotal?: number; audioRequiresVisual?: boolean; imageMimeTypes: string[]; videoMimeTypes: string[]; audioMimeTypes: string[]; imageSizeMustMatchOutput: boolean };
+  modelProfiles: Array<{ modelPrefix: string; match?: 'prefix' | 'exact'; requiresImage: boolean; patch: Partial<VideoProtocolProfile> }>;
 }
 
 export interface VideoProtocolConfig {
@@ -168,7 +168,10 @@ export function getVideoProtocolConfig(): VideoProtocolConfig {
 export function resolveVideoProtocolProfile(protocol: VideoProtocol, modelId: string, hasImage: boolean): VideoProtocolProfile {
   const base = structuredClone(runtimeProtocolConfig.protocols[protocol]);
   for (const rule of base.modelProfiles || []) {
-    if (!modelId.startsWith(rule.modelPrefix) || (rule.requiresImage && !hasImage)) continue;
+    const modelMatches = rule.match === 'exact'
+      ? modelId.toLowerCase() === rule.modelPrefix.toLowerCase()
+      : modelId.startsWith(rule.modelPrefix);
+    if (!modelMatches || (rule.requiresImage && !hasImage)) continue;
     if (rule.patch.parameters?.size) base.parameters.size = { ...base.parameters.size, ...rule.patch.parameters.size };
     if (rule.patch.parameters?.resolution) base.parameters.resolution = { ...base.parameters.resolution, ...rule.patch.parameters.resolution };
     if (rule.patch.parameters?.aspectRatio) base.parameters.aspectRatio = { ...base.parameters.aspectRatio, ...rule.patch.parameters.aspectRatio };
@@ -193,6 +196,8 @@ export function isValidVideoResolution(value: number): boolean {
  * @returns 2160 显示为 4K，其余值显示为带 p 后缀的清晰度。
  */
 export function getVideoResolutionLabel(value: number): string {
+  if (value === 2048) return '2K';
+  if (value === 768) return '768P';
   return value === 2160 ? '4K' : `${value}p`;
 }
 

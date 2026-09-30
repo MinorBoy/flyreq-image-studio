@@ -47,6 +47,7 @@ import {
   getCompleteVideoModels,
   getImageModelOutputSizes,
   getResolvedImageModelId,
+  getResolvedVideoModelId,
   isCompleteVideoModel,
   isXaiImaginePresetId,
   loadRegistry,
@@ -1418,7 +1419,7 @@ export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelCo
                       {selectedVideoCreateEndpoint && <p className="text-xs text-muted-foreground">
                         {t('settings.videoCreateEndpoint')}: <code className="font-mono text-foreground">{selectedVideoCreateEndpoint.method} {selectedVideoCreateEndpoint.path}</code>
                       </p>}
-                      {selectedVideoModel.protocol === 'new-api' && <p className="text-xs text-muted-foreground">{t('settings.newApiResolutionDescription')}</p>}
+                      {selectedVideoModel.protocol === 'new-api' && getResolvedVideoModelId(selectedVideoModel).toLowerCase() !== 'minimax-h3' && <p className="text-xs text-muted-foreground">{t('settings.newApiResolutionDescription')}</p>}
                     </div>
                     <div className="space-y-2"><label className="text-xs text-muted-foreground">{t('settings.displayName')}</label><Input value={selectedVideoModel.name} onChange={event => handleUpdateVideoModel(selectedVideoModel.id, { name: event.target.value })} /></div>
                     <div className="space-y-2"><label className="text-xs text-muted-foreground">{t('settings.baseUrl')}</label><Input value={selectedVideoModel.baseUrl} onChange={event => handleUpdateVideoModel(selectedVideoModel.id, { baseUrl: event.target.value })} /></div>
@@ -1429,7 +1430,7 @@ export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelCo
                         catalogId={selectedVideoModel.id}
                         modelId={selectedVideoModel.modelId}
                         modelIdLabel={t('settings.modelId')}
-                        modelIdPlaceholder={selectedVideoModel.presetModelId || 'grok-imagine-video'}
+                        modelIdPlaceholder={selectedVideoModel.presetModelId || (selectedVideoModel.protocol === 'new-api' ? t('settings.newApiModelPlaceholder') : 'grok-imagine-video')}
                         modelIdHint={t('settings.modelIdPresetHint')}
                         fetchLabel={t('settings.fetchModels')}
                         fetchingLabel={t('settings.fetchingModels')}

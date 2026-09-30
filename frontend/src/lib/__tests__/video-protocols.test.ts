@@ -34,6 +34,69 @@ const referenceUrls = {
 };
 
 describe('视频协议适配器', () => {
+  it('构造 MiniMax H3 new-api content 请求并映射 H3 字段', () => {
+    const upstream = createVideoRequest('new-api', 'key', { ...request, model: 'MiniMax-H3', resolution: 2048, aspectRatio: 'auto', seconds: 12 }, {
+      images: [],
+      videos: [],
+      audios: [],
+      referenceUrls: {
+        images: ['https://cdn.example/reference.png'],
+        videos: ['https://cdn.example/reference.mp4'],
+        audios: ['https://cdn.example/reference.mp3'],
+      },
+    });
+    expect(upstream.path).toBe('/v1/video/generations');
+    expect(upstream.init.headers['Content-Type']).toBe('application/json');
+    expect(JSON.parse(upstream.init.body)).toEqual({
+      model: 'MiniMax-H3',
+      mode: 'reference2video',
+      content: [
+        { type: 'text', text: 'A camera move' },
+        { type: 'image_url', role: 'reference_image', image_url: { url: 'https://cdn.example/reference.png' } },
+        { type: 'video_url', role: 'reference_video', video_url: { url: 'https://cdn.example/reference.mp4' } },
+        { type: 'audio_url', role: 'reference_audio', audio_url: { url: 'https://cdn.example/reference.mp3' } },
+      ],
+      resolution: '2k',
+      duration: 12,
+      ratio: 'auto',
+    });
+    expect(getVideoPollPath('new-api', 'task/h3', 'minimax-h3')).toBe('/v1/videos/task%2Fh3');
+  });
+
+  it('为 MiniMax H3 纯文本请求注入 text2video 模式', () => {
+    const upstream = createVideoRequest('new-api', 'key', { ...request, model: 'minimax-h3', resolution: 720 }, {
+      images: [], videos: [], audios: [], referenceUrls: { images: [], videos: [], audios: [] },
+    });
+    expect(JSON.parse(upstream.init.body)).toEqual(expect.objectContaining({ model: 'minimax-h3', mode: 'text2video' }));
+  });
+
+  it('将 MiniMax H3 的嵌套完成态和失败态统一解析', () => {
+    expect(normalizeVideoPollResult('new-api', {
+      task: { status: 'succeeded', metadata: { url: '/videos/h3.mp4' } },
+    }, 'https://api.example/v1', 'task-h3')).toEqual({
+      state: 'completed',
+      remoteUrl: 'https://api.example/videos/h3.mp4',
+    });
+    expect(normalizeVideoPollResult('new-api', {
+      task: { status: 'succeeded', video_url: 'https://cdn.example/h3.mp4' },
+    }, 'https://api.example', 'task-h3')).toEqual({
+      state: 'completed',
+      remoteUrl: 'https://cdn.example/h3.mp4',
+    });
+    expect(normalizeVideoPollResult('new-api', { task: { status: 'running' } }, 'https://api.example', 'task-h3')).toEqual({ state: 'pending' });
+    expect(normalizeVideoPollResult('new-api', { task: { status: 'failed', metadata: { url: 'https://cdn.example/stale.mp4' } } }, 'https://api.example', 'task-h3')).toEqual({ state: 'failed' });
+  });
+
+  it('拒绝 MiniMax H3 本地参考文件和只有音频的 URL 参考', () => {
+    expect(() => createVideoRequest('new-api', 'key', { ...request, model: 'MINIMAX-H3', resolution: 768 }, files)).toThrow('MiniMax H3 仅支持 HTTP(S) URL 参考媒体');
+    expect(() => createVideoRequest('new-api', 'key', { ...request, model: 'MiniMax-H3', resolution: 768 }, {
+      images: [],
+      videos: [],
+      audios: [],
+      referenceUrls: { images: [], videos: [], audios: ['https://cdn.example/reference.mp3'] },
+    })).toThrow('参考音频必须同时提供');
+  });
+
   it('构造 New API JSON 请求并识别 task_id', () => {
     const upstream = createVideoRequest('new-api', 'key', request, { images: [], videos: [], audios: [], referenceUrls });
     expect(upstream.path).toBe('/v1/video/generations');
